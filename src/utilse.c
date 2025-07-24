@@ -1,5 +1,5 @@
 # include "dataType.h"
-#include "flags.h"
+# include "flags.h"
 
 size_t getArrayLen(const char* const* array) {
   size_t i = 0;

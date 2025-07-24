@@ -35,15 +35,13 @@ static const char* const ignoreFolder[] = {
 
 typedef struct {
   t_setting*  setting;
+  int         maxDep;
   char**      ignoreFolders;     // /abc
   char**      ignoreFiles;       //  hello.c
   char**      ignoreFilesTypes;  // .txt
 } programParam;
 
 //  node
-t_FilesList* makeNode(char* name, int type);
-t_FilesList* makeNodeLast(char* name, int type, t_FilesList** list);
-int          freeNode(t_FilesList** list);
 /*
 
 */

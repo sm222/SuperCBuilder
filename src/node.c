@@ -7,8 +7,8 @@ t_FilesList* makeNode(char* name, int type) {
   node = calloc(1, sizeof(*node));
   if (!node)
     return NULL;
-  node->name = strdup(name);
-  node->type = type;
+  node->data.name = strdup(name);
+  node->data.type = type;
   return node;
 }
 
@@ -44,6 +44,7 @@ t_FilesList* makeNodeLast(char* name, int type, t_FilesList** list) {
     if (!head->next)
       return NULL;
     made = head->next;
+    made->prev = head;
   }
   return made;
 }
@@ -60,11 +61,21 @@ int freeNode(t_FilesList** list) {
       size += freeNode(&head->child);
     }
     t_FilesList* next = head->next;
-    free(head->name);
+    free(head->data.name);
     free(head);
     head = next;
     size++;
   }
   *list = NULL;
   return size;
+}
+
+size_t  getNodeLen(t_FilesList* head) {
+  size_t len = 0;
+  //
+  if (!head)
+    return 0;
+  for (; head && head->prev; head = head->prev) { ; }
+  for (; head; head = head->next) { len++; }
+  return len;
 }

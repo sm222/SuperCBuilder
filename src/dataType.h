@@ -75,11 +75,21 @@ typedef struct setting {
   int help;
 } t_setting;
 
+
+typedef struct FilesListData {
+  char*  name;
+  int    type;
+  size_t size;
+} FilesListData;
+
 typedef struct FilesList {
-  char* name;
-  int   type;
+  FilesListData     data;
+  //
   struct FilesList* child;
+  struct FilesList* parant;
+  //
   struct FilesList* next;
+  struct FilesList* prev;
 } t_FilesList;
 
 

@@ -5,9 +5,9 @@
 void printfolder(t_FilesList* list, int tab, int mode) {
   const char* b = "\t\t\t\t\t\t\t\t\t\t\t\t\t";
   while (list) {
-    if (strncmp(".", list->name, 2) != 0 && strncmp("..", list->name, 3) != 0) {
-      if (mode && list->type != -1)
-        printf("%.*s[%d]%s\n", tab, b, list->type, list->name);
+    if (strncmp(".", list->data.name, 2) != 0 && strncmp("..", list->data.name, 3) != 0) {
+      if (mode && list->data.type != -1)
+        printf("%.*s[%d]%s size -> %zu\n", tab, b, list->data.type, list->data.name, list->data.size);
     }
     if (list->child) {
       printfolder(list->child, tab + 1, mode);
@@ -53,9 +53,11 @@ static int getFileType(const char* fileName) {
 
 # define MAX_DEP 5
 
+# include "node.h"
+
 int mapingDir(const char* dir, t_FilesList** list, int dep) {
   if (isValidFolder(dir) || dep > MAX_DEP)
-    return 1;
+    return 1; // only care if error happen of first try
   struct dirent* de = NULL;
   DIR* dr = opendir(dir);
   if (dr == NULL) {
@@ -70,19 +72,20 @@ int mapingDir(const char* dir, t_FilesList** list, int dep) {
       snprintf(wd, PATH_MAX, "%s/%s", dir, de->d_name);
       stat(wd, &stats);
       int type = S_ISDIR(stats.st_mode) ? folder : unknown;
+      if ((strncmp(".", de->d_name, 2) == 0 || strncmp("..", de->d_name, 3) == 0))
+        continue;
       t_FilesList* t = makeNodeLast(de->d_name, type, list);
-      if (strncmp(".", de->d_name, 2) != 0 && strncmp("..", de->d_name, 3) != 0) {
-        if (type == folder) // if foler
-          mapingDir(wd, &t->child, dep + 1);
-        else
-          t->type = getFileType(de->d_name);
+      if (type == folder) { // if foler
+        mapingDir(wd, &t->child, dep + 1);
+        t->data.size = getNodeLen(t->child);
       }
+      else
+        t->data.type = getFileType(de->d_name);
     }
   } while (de != NULL);
   closedir(dr);
   return 0;
 }
-
 
 static void setup(programParam* data, char* wd, t_setting* setting) {
   memset(data, 0, sizeof(*data));
@@ -96,7 +99,6 @@ static void setup(programParam* data, char* wd, t_setting* setting) {
     printf("current folder %s\n", wd);
   }
 }
-
 
 int program(t_setting* setting) {
   int error = 0;
