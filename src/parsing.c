@@ -1,126 +1,155 @@
-#include "dataType.h"
-#include "utilse.h"
-#include "flags.h"
+# include "dataType.h"
+# include "utilse.h"
+# include "flags.h"
+# include "prossess.h"
 
+const char* const flag_singile[] = {
+  "c\tforce colors output",
+  0x0,
+};
 
+# define AUTO_COLOR "AUTO_COLOR=TRUE"
 
-#define ERR_MSG "%s: unknown flag "
-
-static void flagsError(const char flag, t_setting* programSetting) {
-  if (programSetting->color)
-    fprintf(stderr, ERR_MSG "%s%c%s\n", programSetting->programeName, RED, flag, RESET);
-  else
-    fprintf(stderr, ERR_MSG "%c\n", programSetting->programeName, flag);
-}
-
-static void VerboseflagsError(const char* flag, t_setting* programSetting) {
-  if (programSetting->color)
-    fprintf(stderr, ERR_MSG "%s%s%s\n", programSetting->programeName, RED, flag, RESET);
-  else
-    fprintf(stderr, ERR_MSG "%s\n", programSetting->programeName, flag);
-}
-
-
-static ssize_t getVerboseFlagIndex(const char* line, t_setting* programSetting) {
-  const ssize_t nbFlags = getArrayLen(verboseFlags);
-  programSetting->flagval = NULL;
-  for (ssize_t i = 0; i < nbFlags; i++) {
-    const char* flag = verboseFlags[i] + 2; // skip the --
-    programSetting->flagLen = 0;
-    while (flag[programSetting->flagLen] != ' ' && \
-    flag[programSetting->flagLen] != '=' && flag[programSetting->flagLen] != '>') {
-      programSetting->flagLen++;
+int env_parsing(t_setting* setting) {
+  for (int i = 0; setting->env[i]; i++) {
+    if (strncmp(setting->env[i], AUTO_COLOR, strlen(AUTO_COLOR)) == 0) {
+      set_byte(&setting->flags, setting_color, true);
+      break ;
+      // only one setting so break after we find it to optimise run time
     }
-    char copy[programSetting->flagLen + 2];
-    memcpy(copy, flag, programSetting->flagLen);
-    copy[programSetting->flagLen] = 0;
-    if (flag[programSetting->flagLen] == '=' && line[programSetting->flagLen] == '=') {
-      programSetting->rule[0] = e_equal;
-      programSetting->flagval = line + programSetting->flagLen + 1; // +1 for '='
-    }
-    else if (flag[programSetting->flagLen] == '>' && programSetting->currentArg + 1 < programSetting->ac) {
-      programSetting->rule[0] = e_next;
-      programSetting->flagval = programSetting->av[programSetting->currentArg + 1];
-      programSetting->currentArg += 1;
-    }
-    else {
-      programSetting->flagval = NULL;
-      if (flag[programSetting->flagLen] == '=')
-        programSetting->rule[0] = -1;
-      else if (flag[programSetting->flagLen] == '>')
-        programSetting->rule[0] = -2;
-    }
-    if (strncmp(copy, line, programSetting->flagLen) == 0) {
-      if (programSetting->rule[0] >= 0)
-        return i;
-      else {
-        programSetting->helpFlag[0] = 2;
-        programSetting->helpFlag[1] = i;
-        programSetting->help = 1;
-        fprintf(stderr, "miss use of '--%.*s flag'\n", programSetting->flagLen, flag);
-        return -2;
-      }
-    }
-  }
-  return -1;
-}
-
-/*
-*  not pretty but simple to add more
-*/
-
-int setVerboseFlag(const char* line, t_setting* programSetting) {
-  memset(programSetting->rule, 0, sizeof(int) * 2);
-  programSetting->flagval = NULL;
-  const ssize_t i = getVerboseFlagIndex(line, programSetting);
-  if (i == -1) {
-    VerboseflagsError(line, programSetting);
-    return 1;
-  }
-  else if (i == -2)
-    return 1;
-  if (i == e_color) {
-    programSetting->color = 1;
-  }
-  if (i == e_stopError) {
-    programSetting->stopOnError = 0;
-  }
-  if (i == e_info) {
-    //todo
-  }
-  if (i == e_help) {
-    programSetting->help = 1;
-  }
-  if (i == e_path) {
-    snprintf(programSetting->workignDir, PATH_MAX, \
-      "%s", programSetting->flagval);
   }
   return 0;
 }
 
-int setFlag(const char* line, const size_t n, t_setting* programSetting) {
-  memset(programSetting->rule, 0, sizeof(int) * 2);
-  programSetting->flagval = NULL;
-  size_t i = 1;
-  int status = 0;
-  while (i < n) {
-    if (line[i] == 'c') {
-      programSetting->color = 1;
+enum {
+  none = -1,
+  equal = 0,
+  next  = 1
+};
+
+# define VAR_NAME_MAX_SIZE  NAME_MAX
+# define VALUE_MAX_SIZE     PATH_MAX
+
+
+char   value__[VALUE_MAX_SIZE];
+
+# include <string.h>
+
+
+static char* grab_value(t_setting* setting, const char* value, int type) {
+  bzero(&value__, VALUE_MAX_SIZE);
+  const char*  p = value;
+  if (!p)
+    return value__;
+  if (type == next) {
+    if (setting->current + setting->jump >= setting->ac) {
+      return value__;
     }
-    else if (line[i] == 's') {
-      programSetting->stopOnError = 0;
-    }
-    else if (line[i] == 'h') {
-      programSetting->help = 1;
-      break ;
-    }
-    else {
-      status = 1;
-      flagsError(line[i], programSetting);
-      if (programSetting->stopOnError)
-        break ;
-    }
-    i++;
+    p = setting->av[setting->current + setting->jump];
+    setting->jump += 1; // skip one arg in av
   }
-  return status;
+  const size_t len = strlen(p);
+  const size_t copylen = len < VALUE_MAX_SIZE ? len : VALUE_MAX_SIZE - 1;
+  memcpy(value__, p, copylen);
+  return value__;
+}
+
+static int set_single_value(t_setting* setting, int c) {
+  if (c == 'c') {
+    set_byte(&setting->flags, setting_color, true);
+  }
+  else if (c == 'h') {
+    help(setting, "");
+  }
+  else if (c == 'B') {
+    const char* v = grab_value(setting, "", next);
+    barr(setting, v);
+  }
+  else {
+    put_str_error(setting, RED, "%c: is unknow flag, call -h or --help to see the option\n", c);
+    return 1;
+  }
+  return 0;
+}
+
+int parsing_get_single(t_setting* setting) {
+  setting->jump = 1;
+  if (setting->current > setting->ac)
+    return -1;
+  if (setting->av[setting->current][0] == '-' && !setting->av[setting->current][1]) {
+    put_str_error(setting, RED, "flag was call with not params\n");
+    return 2;
+  }
+  const size_t len = strlen(setting->av[setting->current]);
+  int error = 0;
+  for (size_t i = 1; i < len; i++) {
+    error = set_single_value(setting, setting->av[setting->current][i]);
+    if (!read_byte(setting->flags, setting_continue_on_error) && error)
+      break;
+  }
+  return error;
+}
+
+/*
+  double
+*/
+
+static bool strncmp_name(const char* s1, const char* s2) {
+  const size_t l = strlen(s2);
+  if (strncmp(s1, s2, l) == 0 && (s1[l] == '\0' || s1[l] == '='))
+    return 1;
+  return 0;
+}
+
+
+
+
+
+# include <stdlib.h>
+
+
+static int parsing_value_double(t_setting* setting, const char* name, const char* value) {
+  int(*ft)(t_setting*, const char*) = NULL;
+  int grabValue = none;
+  //
+  if (strncmp_name(name, "color"))
+    set_byte(&setting->flags, setting_color, true);
+  else if (strncmp_name(name, "foo")) {
+    ft = &foo;
+    grabValue = equal;
+  }
+  else if (strncmp_name(name, "help"))
+    ft = &help;
+  else if (strncmp_name(name, "barr")) {
+    ft = &barr;
+    grabValue = next;
+  }
+  else {
+    put_str_error(setting, RED, "%s: --%s unknow flag, try --help", setting->av[0], name);
+    return 1;
+  }
+  grab_value(setting, value, grabValue);
+  const int e = ft ? ft(setting, value__): 0;
+  return e;
+}
+
+
+static int set_double_value(t_setting* setting) {
+  const char* s = setting->av[setting->current] + 2;
+  size_t len = 0;
+  while (s[len] && (s[len] != 0 && s[len] != '=')) {
+    len++;
+  }
+  return parsing_value_double(setting, s, s + len);
+}
+
+int parsing_get_double(t_setting* setting) {
+  setting->jump = 1;
+  if (setting->current > setting->ac)
+    return -1;
+  if (setting->av[setting->current][1] == '-' && !setting->av[setting->current][2]) {
+    put_str_error(setting, RED, "flag was call with not params\n");
+    return 2;
+  }
+  return set_double_value(setting);
 }

@@ -1,79 +1,25 @@
 #ifndef __FLAGS__
 # define __FLAGS__
 
-//  flags like -xyz
-
-//  single
-/*
-format
--a             -    what it dose
-^^ flag
-| one dash
-*/
-
-# define DEVFLAG 1 // use only to work on base
-
 enum valueArg {
   e_bool,
   e_next,
   e_equal,
 };
 
+# define FLAG_NAME_LEN 100
 
-#  if DEVFLAG
-static const char* const singleFlags[] = {
-  "-c             -  turn on color",
-  "-s             -  contine parsing if invalid flags",
-  "-h             -  show this message",
-  "-p             -  run the program in this folder as root",
-  0x0, // NULL
-};
-
-enum {
-  e_color = 0,
-  e_stopError,
-  e_info,
-  e_help,
-  e_path,
-};
+typedef struct s_flagValue {
+  struct s_flagValue* next;
+  int                 flag;
+  char                name[FLAG_NAME_LEN];
+  char*               value;
+} t_flagValue;
 
 
-//  verbose
-static const char* const verboseFlags[] = {
-  "--color        -   same as c",
-  "--stopOnError  -   same as s",
-  "--info         -   todo     ",
-  "--help         -   same as h",
-  "--path={path}  -   run the program in this folder as root",
-  0x0, // NULL
-};
-
-# endif
-
-#  if DEVFLAG == 0
-static const char* const singleFlags[] = {
-  "-c             -  turn on color",
-  "-s             -  contine parsing if invalid flags",
-  "-h             -  show this message",
-  0x0, // NULL
-};
-
-enum {
-  e_color = 0,
-  e_stopError,
-  e_info,
-  e_help,
-  e_dest,
-};
-
-
-//  verbose
-static const char* const verboseFlags[] = {
-  "--color        -   same as c",
-  "--stopOnError  -   same as s",
-  "--help         -   same as h",
-  0x0, // NULL
-};
-# endif
+int          fv_add_last(t_flagValue** list, int flag, const char* value);
+int          fv_free(t_flagValue** list);
+int          fv_set_name(t_flagValue* node, const char* name);
+void         fv_print(t_flagValue* list);
 
 #endif

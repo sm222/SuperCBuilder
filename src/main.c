@@ -2,9 +2,11 @@
 #include "dataType.h"
 #include "utilse.h"
 #include "parsing.h"
-#include "program.h"
+#include "flags.h"
 
-bool test_name(const char* name) {
+
+# ifdef NAME_CHECK
+static bool test_name(const char* name) {
   # if (SYSTYPE == SYS_LINUX) || (SYSTYPE == SYS_MAC)
     const char sep = '/';
   # endif
@@ -23,49 +25,59 @@ bool test_name(const char* name) {
     return false;
   }
   if (strcmp(cut + 1, PROG_NAME) != 0) {
-    write(2, "error: program was rename!\n", 27);
+    put_str_nl("error: program was rename!", STDERR_FILENO);
     return false;
   }
   return true;
 }
+# endif
 
+int setStart(void*);
 
-int base(t_mainData data, int fdIn, int fdOut) {
+static int base(t_mainData data, int fdIn, int fdOut) {
   int status = EX_OK;
-  t_setting programSetting;
-  //
-  memset(&programSetting, 0 ,sizeof(programSetting));
-  programSetting.stdIn = fdIn;
-  programSetting.stdOut = fdOut;
-  programSetting.programeName = data.av[0];
-  programSetting.stopOnError = 1; //defalut
-  programSetting.ac = data.ac;
-  programSetting.av = data.av;
+  t_setting programSetting = {
+    .stdIn        = fdIn,        //*
+    .stdOut       = fdOut,       //
+    .ac           = data.ac,     //
+    .current      = 1,           // skip programe name
+    .jump         = 1,
+    .av           = data.av,     //
+    .programeName = data.av[0],  // program name
+    .flags        = 0,           // flag
+    .env          = data.env,    //
+    .flagValue    = NULL,        //
+    .avFt         = NULL,        //
+    .programFt    = NULL,        //*
+  };
   //
   # ifdef NAME_CHECK
   if (!test_name(data.av[0]))
     return 1;
   # endif
-  //const size_t envLen  = getArrayLen(data.env);
-  // skip program name
-  int* i = &programSetting.currentArg;
-  for (*i = 1; *i  < data.ac; (*i)++) {
-    const size_t lineSize = strlen(data.av[*i]);
-    if (strncmp(data.av[*i], "--", 2) == 0 )                             // verbose
-      status = setVerboseFlag(data.av[*i] + 2, &programSetting);
-    else if (strncmp(data.av[*i], "-", 1) == 0 && data.av[*i][1] != '\0') // flags like -xyz
-      status = setFlag(data.av[*i], lineSize, &programSetting);
-    else {
-      printf("arg ->%s\n", data.av[*i]); // normal args // replace for your code
+  # ifdef SETUP_EXTERN
+  if (setStart(&programSetting))
+    return 1;
+  # endif
+  env_parsing(&programSetting);
+  for (; programSetting.current < programSetting.ac; programSetting.current += programSetting.jump) {
+    if (strncmp(programSetting.av[programSetting.current], "--", 2) == 0) {
+      status = parsing_get_double(&programSetting);
     }
-    if (programSetting.help) {
-      help(programSetting.helpFlag);
+    else if (programSetting.av[programSetting.current][0] == '-') {
+      status = parsing_get_single(&programSetting);
+    } else {
+      if (programSetting.avFt)
+        status = programSetting.avFt(&programSetting, programSetting.av[programSetting.current]);
+      // programe here (ex: add file)
     }
-    if (programSetting.stopOnError && status)
-      break ;
+    if (read_byte(programSetting.flags, setting_continue_on_error) && status)
+      return status;
+    put_str_error(&programSetting, RED, "code %d", status);
   }
-  if (!status)
-    status = program(&programSetting);
+  if (programSetting.programFt)
+    status = programSetting.programFt(&programSetting);
+  // programe here
   return status;
 }
 
