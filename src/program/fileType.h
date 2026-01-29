@@ -3,12 +3,12 @@
 
 typedef enum {
   unknown = -1,
-  folder,
-  cFile,
-  hFile,
-  cppFile,
-  hppFile,
-  tppFile,
+  folder  = 0,
+  cFile   = 2,
+  hFile   = 3,
+  cppFile = 4,
+  hppFile = 5,
+  tppFile = 6,
 } t_file_type;
 
 

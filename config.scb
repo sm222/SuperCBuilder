@@ -16,7 +16,9 @@ debug = -g
 ING:
 ../Engine/include
 
-CC:
+CR:
+  $engine_flags
+  $engine_setting
 
 DEP:
 buildraylib: make -C ../Engine/include/raylib/src/
