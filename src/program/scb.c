@@ -1,9 +1,4 @@
-# include "../dataType.h"
-# include "../utilse.h"
-# include "node.h"
-# include <dirent.h>
-# include <sys/stat.h>
-# include "fileType.h"
+#include "scb.h"
 
 static char* getFileTypeSimble(int n) {
   if (n == folder)
@@ -21,7 +16,7 @@ void printfolder(t_FilesList* list, int tab, int mode) {
     if (strncmp(".", list->data.name, 2) != 0 && strncmp("..", list->data.name, 3) != 0) {
       //test_co(list, list->next);
       if (mode && list->data.type != -1)
-        printf("%.*s[%s]%s %s\n", tab * 2, b, getFileTypeSimble(list->data.type), list->data.name, list->parant ? list->parant->data.name : "");
+        printf("%.*s[%s]%s\n", tab * 2, b, getFileTypeSimble(list->data.type), list->data.name);
     }
     if (list->child) {
       printfolder(list->child, tab + 1, mode);
@@ -157,32 +152,26 @@ int mapingDir(const char* dir, t_FilesList** list, int maxDep) {
   return 0;
 }
 
-static void setup(char* wd, t_setting* setting) {
-  (void)setting;
-  getcwd(wd, PATH_MAX);
-  printf("current folder %s\n", wd);
+static void setup(t_SCB* setting) {
+  getcwd(setting->path, PATH_MAX);
 }
 
 
-int code(t_setting* setting) {
-  int error = 0;
-  char wd[PATH_MAX + 1];
+
+int setStart(void* in) {
+  t_setting* ptr = in;
+  (void)ptr;
+  t_SCB  SCB;
   //
-  setup(wd, setting);
+  setup(&SCB);
   //
   t_FilesList* list = NULL;
-  error = mapingDir(wd, &list, 10);
-  if (!error) {
+  SCB.error = mapingDir(SCB.path, &list, 10);
+  if (!SCB.error) {
     move_folder_up(&list, 0);
     connectToFolder(list, NULL);
     printfolder(list, 0, 1);
   }
   freeNode(&list);
-  return error;
-}
-
-int setStart(void* in) {
-  t_setting* ptr = in;
-  
-  return code(ptr);
+  return SCB.error;
 }

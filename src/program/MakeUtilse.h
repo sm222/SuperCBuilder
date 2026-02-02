@@ -8,7 +8,7 @@
 #include  <stdarg.h>
 
 
-const char* const buildFile[] = {
+static const char* const buildFileLanguage[] = {
   "Makefile:#",
   0x0,
 };
@@ -18,7 +18,8 @@ typedef struct {
   int    configFd;
   char*  filename;
   char** var;
-
+  size_t varByte;
+  size_t varArray;
 } outFileData;
 
 size_t output(int fd, const char* s, ...);
