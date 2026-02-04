@@ -46,6 +46,21 @@ static void swapData(t_FilesList* node) {
   node->next->child = child;
 }
 
+static void move_alpah(t_FilesList** list) {
+  for () {
+  
+  }
+  t_FilesList* tmp = *list;
+  for ( ; tmp->next; tmp = tmp->next) {
+    if (tmp->data.type == folder) {
+      move_alpah(&tmp->child);
+    }
+    if (tmp->data.type != folder && tmp->next->data.type == folder) {
+      swapData(tmp);
+      get_to_start(&tmp);
+    }
+  }
+}
 
 static void move_folder_up(t_FilesList** list, int d) {
   if (!get_to_start(list))
@@ -154,6 +169,7 @@ int mapingDir(const char* dir, t_FilesList** list, int maxDep) {
 
 static void setup(t_SCB* setting) {
   getcwd(setting->path, PATH_MAX);
+  memcpy(setting->configPath, ".", 2);
 }
 
 
