@@ -17,14 +17,14 @@ static char* getFileTypeSimble(int n) {
 }
 
 void printfolder(t_node* list, int tab, int mode) {
-  const char* b = "*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t";
+  const char* b = "|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t";
   while (list) {
     if (strncmp(".", list->data.name, 2) != 0 && strncmp("..", list->data.name, 3) != 0) {
       //test_co(list, list->next);
       if (list->data.type != folder)
         printf("%.*s[%s]%s\n", tab * 2, b, getFileTypeSimble(list->data.type), list->data.name);
       else {
-        printf("%.*s[%zu][%s]%s\n", tab * 2, b, list->data.fsize, getFileTypeSimble(list->data.type), list->data.name);
+        printf("%.*s[%s][%zu]%s\n", tab * 2, b, getFileTypeSimble(list->data.type), list->data.fsize, list->data.name);
       }
     }
     if (list->child) {
@@ -73,57 +73,52 @@ static int getFileType(const char* fileName) {
   return -1;
 }
 
-# define MAX_DEP 5
-
 
 static bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
 
 
-int connectToFolder(t_FilesList* list, t_FilesList* head) {
-  while (list) {
-    if (list->data.type == folder) {
-      connectToFolder(list->child, list);
-    }
-    list->parant = head;
-    list = list->next;
-  }
-  return 0;
-}
-
 // not null safe
 static bool isEmtyF(t_node* node) {
   return (node->data.type == folder && node->data.fsize == 0);
 }
 
-void deledEmty(t_node** list) {
-  if (!list || !*list)
-    return;
+int deledEmty(t_node** list) {
+  if (!list && !*list) {
+    return 0;
+  }
+  int dell = 0;
+  HEADDELL:
+  while (*list && isEmtyF(*list)) {
+    t_node* tmp = (*list)->next;
+    t_node* tooFree = *list;
+    free(tooFree->data.name);
+    free(tooFree);
+    *list = tmp;
+    dell++;
+  }
   t_node* tmp = *list;
-  t_node* prv = NULL;
   while (tmp) {
-    printf("here\n");
-    t_node* head = *list;
-    if (tmp && tmp == head && isEmtyF(tmp)) {
-      *list = tmp->next;
-      free(tmp->data.name);
-      free(tmp);
+    printf("%s\n", tmp->data.name);
+    if (tmp->next && tmp->next->data.type == folder && tmp->next->data.fsize == 0) {
+      t_node* tooFree = tmp->next;
+      t_node* next = tooFree->next;
+      tmp->next = next;
+      free(tooFree->data.name);
+      free(tooFree);
       tmp = *list;
+      dell++;
       continue ;
     }
-    if (prv && isEmtyF(tmp)) {
-      printf("me\n");
-      t_node* next = tmp->next;
-      prv->next = next;
-      free(tmp->data.name);
-      free(tmp);
-      tmp = prv;
-      continue;
+    if (tmp->data.type == folder) {
+      (*list)->data.fsize -= deledEmty(&tmp->child);
+      if ((*list)->data.fsize == 0)
+        goto HEADDELL;
     }
     tmp = tmp->next;
-    prv = tmp;
   }
+  return dell;
 }
 
 
@@ -165,7 +160,36 @@ static void setup(t_SCB* setting) {
   memcpy(setting->configPath, ".", 2);
 }
 
+static bool isSwap(t_node* n) {
+  if (n && n->next) {
+    if (n->data.type != folder && n->next->data.type == folder)
+      return true;
+  }
+  return false;
+}
 
+static void swapData(t_node* n) {
+  t_node_data tmp = n->data;
+  n->data = n->next->data;
+  n->next->data = tmp;
+  n->child = n->next->child;
+  n->next->child = NULL;
+}
+
+void moveFolderUp(t_node** list) {
+  t_node* tmp = *list;
+  while (tmp) {
+    if (isSwap(tmp)) {
+      swapData(tmp);
+      tmp = *list;
+      continue ;
+    }
+    if (tmp->data.type == folder) {
+      moveFolderUp(&tmp->child);
+    }
+    tmp = tmp->next;
+  }
+}
 
 int setStart(void* in) {
   t_setting* ptr = in;
@@ -180,6 +204,8 @@ int setStart(void* in) {
     //move_folder_up(&list, 0);
     //connectToFolder(list, NULL);
     //deledEmty(&list);
+    moveFolderUp(&list);
+    deledEmty(&list);
     printfolder(list, 0, 1);
   }
   freeNode(&list);

@@ -4,29 +4,10 @@
 
 # include <stdlib.h> // calloc free
 
-typedef struct FilesListData {
-  char*  name;
-  char*  parant;
-  int    type;
-  size_t size;
-  size_t id;
-} FilesListData;
-
-typedef struct FilesList {
-  FilesListData     data;
-  //
-  struct FilesList* child;
-  struct FilesList* parant;
-  //
-  struct FilesList* next;
-  struct FilesList* prev;
-} t_FilesList;
-
 typedef struct  {
   char*  name;
   int    type;
   size_t fsize;
-
 } t_node_data;
 
 typedef struct s_node {
