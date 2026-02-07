@@ -89,10 +89,11 @@ int deledEmty(t_node** list) {
     return 0;
   }
   int dell = 0;
-  HEADDELL:
+  HEADDELL: // first time using it
   while (*list && isEmtyF(*list)) {
     t_node* tmp = (*list)->next;
     t_node* tooFree = *list;
+    printf("dell->%s\n", tooFree->data.name);
     free(tooFree->data.name);
     free(tooFree);
     *list = tmp;
@@ -100,11 +101,11 @@ int deledEmty(t_node** list) {
   }
   t_node* tmp = *list;
   while (tmp) {
-    printf("%s\n", tmp->data.name);
-    if (tmp->next && tmp->next->data.type == folder && tmp->next->data.fsize == 0) {
+    if (tmp->next && isEmtyF(tmp->next)) {
       t_node* tooFree = tmp->next;
       t_node* next = tooFree->next;
       tmp->next = next;
+      printf("dell->%s\n", tooFree->data.name);
       free(tooFree->data.name);
       free(tooFree);
       tmp = *list;
