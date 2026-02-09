@@ -16,11 +16,6 @@ static char* getFileTypeSimble(int n) {
   return "error!";
 }
 
-static void* dell_node(t_node* n) {
-  free(n->data.name);
-  free(n);
-  return NULL;
-}
 
 void printfolder(t_node* list, int tab, int mode) {
   const char* b = "|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t|\t";
@@ -43,10 +38,10 @@ void printfolder(t_node* list, int tab, int mode) {
 
 
 static int testFolderList(const char* folder) {
-  const size_t i = getArrayLen(ignoreFolder);
+  const size_t i = getArrayLen(DefaultIgnoreFolder);
   size_t j = 0;
   while (j < i) {
-    if (strcmp(folder, ignoreFolder[j]) == 0)
+    if (strcmp(folder, DefaultIgnoreFolder[j]) == 0)
       return 1;
     j++;
   }
@@ -101,7 +96,7 @@ int deledEmty(t_node** list) {
   while (*list && isEmtyF(*list)) {
     t_node* tmp = (*list)->next;
     t_node* tooFree = *list;
-    dell_node(tooFree);
+    dellNode(tooFree);
     *list = tmp;
     dell++;
   }
@@ -111,7 +106,7 @@ int deledEmty(t_node** list) {
       t_node* tooFree = tmp->next;
       t_node* next = tooFree->next;
       tmp->next = next;
-      dell_node(tooFree);
+      dellNode(tooFree);
       tmp = *list;
       dell++;
       continue ;
@@ -162,6 +157,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
 
 
 static void setup(t_SCB* setting) {
+  bzero(setting, sizeof(*setting));
   getcwd(setting->path, PATH_MAX);
   memcpy(setting->configPath, ".", 2);
 }
@@ -197,6 +193,8 @@ void moveFolderUp(t_node** list) {
   }
 }
 
+# include "MakerUtilse.h"
+
 int setStart(void* in) {
   t_setting* ptr = in;
   (void)ptr;
@@ -204,16 +202,18 @@ int setStart(void* in) {
   //
   setup(&SCB);
   //
-  t_node* list = NULL;
-  SCB.error = mapDir(SCB.path, &list, 10);
+  SCB.error = mapDir(SCB.path, &SCB.node, 10);
   if (!SCB.error) {
     //move_folder_up(&list, 0);
     //connectToFolder(list, NULL);
     //deledEmty(&list);
-    moveFolderUp(&list);
-    deledEmty(&list);
-    printfolder(list, 0, 1);
+    moveFolderUp(&SCB.node);
+    deledEmty(&SCB.node);
+    printfolder(SCB.node, 0, 1);
+    outFileData data = makerSetup(&SCB, 0);
+    makerStart(&data);
+    (void)data;
   }
-  freeNode(&list);
+  freeNode(&SCB.node);
   return SCB.error;
 }

@@ -8,9 +8,6 @@
 # include <sys/stat.h>
 # include "fileType.h"
 
-enum {
-  verbose,
-};
 
 typedef struct {
   char          path[PATH_MAX + 1];
@@ -18,6 +15,7 @@ typedef struct {
   unsigned int  maxDep;
   int32_t       flags;
   int           error;
+  t_node*       node;
 } t_SCB;
 
 #endif

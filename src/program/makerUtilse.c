@@ -1,4 +1,4 @@
-#include "MakeUtilse.h"
+#include "MakerUtilse.h"
 
 const size_t bSize = 9999;
 
@@ -163,6 +163,37 @@ int read_file(outFileData* file) {
   }
   file->varArray = numberLine;
   return 0;
+}
+
+outFileData makerSetup(t_SCB* in, int mode) {
+  outFileData data;
+  bzero(&data, sizeof(data));
+  data.header = in->node;
+  data.outputType = mode;
+  return data;
+}
+
+# include "makerMakeFile.h"
+
+void makerStart(outFileData *data) {
+  if (!data)
+    return ;
+  if (data->outputType == 0) {
+    buildMakefile(data);
+  }
+}
+
+bool newFile(char *name, outFileData *data) {
+  if (!name || !data)
+    return false;
+  data->fd = open(name, O_CREAT | O_TRUNC | O_RDWR, 0644);
+  if (!data->fd)
+    return false;
+  return true;
+}
+
+void closeFile(outFileData *data) {
+  close(data->fd);
 }
 
 

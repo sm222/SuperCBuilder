@@ -23,7 +23,7 @@ static const char* const fileType[] = {
   0x0,
 };
 
-static const char* const ignoreFolder[] = {
+static const char* const DefaultIgnoreFolder[] = {
   "/.git",
   "/.vscode",
   0x0,

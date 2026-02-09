@@ -20,5 +20,6 @@ size_t       getId(int mode);
 int          freeNode(t_node** list);
 t_node*      makeNodeLast(char* name, int type, t_node** list);
 size_t       getNodeLen(t_node* head);
+void*        dellNode(t_node* n);
 
 #endif

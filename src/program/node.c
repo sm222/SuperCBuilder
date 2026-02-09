@@ -80,3 +80,9 @@ size_t  getNodeLen(t_node* head) {
   for (; head; head = head->next) { len++; }
   return len;
 }
+
+void* dellNode(t_node* n) {
+  free(n->data.name);
+  free(n);
+  return NULL;
+}
