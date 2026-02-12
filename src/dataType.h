@@ -13,6 +13,8 @@
 # include <stdbool.h>
 # include <sys/param.h>
 
+#define SETUP_EXTERN
+
 // https://stackoverflow.com/questions/142508/how-do-i-check-os-with-a-preprocessor-directive
 
 # define SYS_LINUX   0 // Linux is use

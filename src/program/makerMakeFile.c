@@ -12,13 +12,10 @@ char* capName(const char* name) {
   return newName;
 }
 
-static void drawVarName(const char* name, const char* from, const int* fd) {
-  char outBuffer[MAXPATHLEN + 20];
+static ssize_t drawVarName(const char* name, const char* from, const int* fd) {
   if (from)
-    sprintf(outBuffer, "F_%s\t\t=\t\t$(F_%s)%s/\n\n", capName(name), from ,name);
-  else
-    sprintf(outBuffer, "F_%s\t\t=\t\t%s/\n\n", capName(name) ,name);
-  write(*fd, outBuffer, strlen(outBuffer));
+    return output(*fd, "F_%s\t\t=\t\t$(F_%s)%s/\n\n", capName(name), from ,name);
+  return output(*fd, "F_%s\t\t=\t\t%s/\n\n", capName(name) ,name);
 }
 
 ssize_t drawFile(t_node* n, const char* name, const int fd) {
@@ -27,31 +24,32 @@ ssize_t drawFile(t_node* n, const char* name, const int fd) {
 
 //todo draw file in a object var
 
-void putAllFiles(t_node* tmp, const char* from, const int fd) {
+void putAllFiles(outFileData* data, t_node* tmp, const char* from, const int fd) {
+  makeOutVarLast(from, &data->outVar);
   output(fd, "O_%s\t=\t\\\n", from);
   while (tmp) {
-  if (tmp->data.type % 2 == 0 && tmp->data.type != folder)
+  if (IS_C_CPP(tmp) && !IS_FOLDER(tmp))
     drawFile(tmp, from, fd);
   tmp = tmp->next;
   }
   output(fd, "\n");
 }
 
-static void  buidFileAndFolder(t_node** head, const char* from, const int* fd) {
+static void  buidFileAndFolder(outFileData* data, t_node** head, const char* from, const int* fd) {
   t_node* tmp = *head;
   char folderName[MAXPATHLEN];
   bzero(folderName, MAXPATHLEN);
-  if (tmp && tmp->data.type == folder) {
+  if (tmp && IS_FOLDER(tmp)) {
     memcpy(folderName, capName(tmp->data.name), strlen(tmp->data.name) + 1);
   }
   while (tmp) {
-    if (tmp->data.type == folder) {
+    if (IS_FOLDER(tmp)) {
       drawVarName(tmp->data.name, from ,fd);
-      buidFileAndFolder(&tmp->child, folderName, fd);
+      buidFileAndFolder(data, &tmp->child, folderName, fd);
       write(*fd, "\n", 1);
     }
-    else if (tmp->data.type % 2 == 0) {
-      putAllFiles(tmp, from, *fd);
+    else if (IS_FILE(tmp)) {
+      putAllFiles(data, tmp, from, *fd);
       return;
     }
     tmp = tmp->next;
@@ -60,7 +58,7 @@ static void  buidFileAndFolder(t_node** head, const char* from, const int* fd) {
 
 
 void printRoot(const char* root, outFileData* data) {
-  output(data->fd, "F_%s\t\t=\t\t%s\n", root, data->workingDirectory);
+  output(data->fd, "F_%s\t\t=\t\t%s/\n", root, data->workingDirectory);
 }
 
 static ssize_t readList(t_node** head, outFileData* data) {
@@ -68,7 +66,8 @@ static ssize_t readList(t_node** head, outFileData* data) {
   const char* truckPath = strrchr(data->workingDirectory, '/');
   //! switch that line for windows or other case that path don't hold a /
   printRoot(truckPath + 1, data);
-  buidFileAndFolder(head, truckPath + 1, &fd);
+  //
+  buidFileAndFolder(data ,head, truckPath + 1, &fd);
   return 0;
 }
 
@@ -78,10 +77,44 @@ ssize_t drawName(const char* name, const int fd) {
 
 static ssize_t drawCompiler(outFileData* data) {
   ssize_t total = 0;
+  total += output(data->fd, "CC\t\t=\tcc\n");
+  total += output(data->fd, "CXX\t\t=\tcc\n");
   total += output(data->fd, "\n\rDEBUG\t\t\t=\t\t-g\n\n", data->cCompiler);
   total += output(data->fd, "CFLAGS\t\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n", data->cCompiler);
-  total += output(data->fd, "CXXFLAGS\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n\n\n", data->cCompiler);
+  total += output(data->fd, "CCFLAGS\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n\n\n", data->cCompiler);
   return total;
+}
+
+static ssize_t drawObjectVar(outFileData* data) {
+  output(data->fd, "SRCS_FILES\t\t=\t\\\n");
+  t_outVar* tmp = data->outVar;
+  while (tmp) {
+    output(data->fd, "\t$(O_%s)\t\t\\\n", tmp->name);
+    tmp = tmp->next;
+  }
+  output(data->fd, "\nOBJS	=	$(SRCS_FILES:.c=.o)\n\n");
+  //SRCS_FILES
+  //OBJS	=	$(SRCS_FILES:.cpp=.o)
+  return 0;
+}
+
+static ssize_t drawMakeRule(outFileData* data) {
+  output(data->fd, "all: ");
+  //! add dependece
+  output(data->fd, "$(NAME)\n\n");
+  output(data->fd, "$(NAME): $(CC)\n\n");
+  output(data->fd, "$(CC): $(OBJS)\n");
+  output(data->fd, "\t$(CC) $(CFLAGS) $(OBJS)");
+  //!add more var if needed
+  output(data->fd, " -o $(NAME)\n\n");
+  return 0;
+}
+
+static ssize_t drawEnd(outFileData* data) {
+  output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n\n");
+  output(data->fd, "fclean: clean\n\t@rm -fv $(NAME)\n\n");
+  output(data->fd, "re: fclean all\n\nPHONY:\n#END");
+  return 0;
 }
 
 ssize_t buildMakefile(outFileData* data) {
@@ -94,6 +127,10 @@ ssize_t buildMakefile(outFileData* data) {
   totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data->fd);
   readList(&data->header, data);
+  drawObjectVar(data);
+  drawMakeRule(data);
+  drawEnd(data);
+  freeOutVar(&data->outVar);
   closeFile(data);
   return totalBytes;
 }

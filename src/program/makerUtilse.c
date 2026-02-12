@@ -3,6 +3,54 @@
 const size_t bSize = 9999;
 
 
+static t_outVar* makeOutVar(const char* name) {
+  t_outVar* out = calloc(1, sizeof(*out));
+  if (!out)
+    return NULL;
+  out->name = strdup(name);
+  return out;
+}
+
+t_outVar* makeOutVarLast(const char* name, t_outVar** list) {
+  if (!list || !name)
+    return NULL;
+  if (!(*list)) {
+    *list = makeOutVar(name);
+    if (!(*list)) {
+      return NULL;
+    }
+    return *list;
+  }
+  t_outVar* tmp = *list;
+  while (tmp && tmp->next) {
+    tmp = tmp->next;
+  }
+  tmp->next = makeOutVar(name);
+  return tmp->next;
+}
+
+void freeOutVar(t_outVar** list) {
+  if (!list)
+    return;
+  t_outVar* tmp = *list;
+  t_outVar* next = NULL;
+  while (tmp) {
+    next = tmp->next;
+    free(tmp->name);
+    free(tmp);
+    tmp = next;
+  }
+  *list = NULL;
+}
+
+void printOutVar(t_outVar* head) {
+  size_t i = 0;
+  while (head) {
+    printf("[%zu]%s\n", i++, head->name);
+    head = head->next;
+  }
+}
+
 # define NL '\n'
 # define B_SIZE 101
 

@@ -1,4 +1,4 @@
-#ifndef  NODE_H 
+#ifndef  NODE_H
 # define NODE_H
 
 
@@ -15,6 +15,10 @@ typedef struct s_node {
   struct s_node* child;
   t_node_data    data;
 } t_node;
+
+# define  IS_FOLDER(node)   (node->data.type == folder)
+# define  IS_FILE(node)     (!IS_FOLDER(node))
+# define  IS_C_CPP(node)    (!IS_FOLDER(node) && (node->data.type % 2 == 0))
 
 size_t       getId(int mode);
 int          freeNode(t_node** list);
