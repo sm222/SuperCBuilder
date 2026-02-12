@@ -24,6 +24,9 @@ typedef struct {
   size_t  varArray;
   t_node* header;
   int     outputType;
+  char*   workingDirectory;
+  char*   cCompiler;
+  char*   cppCompiler;
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);

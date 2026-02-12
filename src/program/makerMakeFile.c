@@ -5,7 +5,7 @@
 char* capName(const char* name) {
   static char newName[MAXPATHLEN + 20];
   size_t len = strlen(name);
-  newName[len] = 0;
+  bzero(newName, MAXPATHLEN + 20);
   while (len--) {
     newName[len] = (char)toupper(name[len]);
   }
@@ -22,18 +22,25 @@ static void drawVarName(const char* name, const char* from, const int* fd) {
 }
 
 ssize_t drawFile(t_node* n, const char* name, const int fd) {
-  char outBuffer[MAXPATHLEN + 20];
-  sprintf(outBuffer, "\t\t$(%s)%s\\\n", name, n->data.name);
-  return write(fd, outBuffer, strlen(outBuffer));
+  return output(fd, "\t$(F_%s)%s%s\n", name, n->data.name, n->next ? "\\" : "");
 }
 
 //todo draw file in a object var
+
+void putAllFiles(t_node* tmp, const char* from, const int fd) {
+  output(fd, "O_%s\t=\t\\\n", from);
+  while (tmp) {
+  if (tmp->data.type % 2 == 0 && tmp->data.type != folder)
+    drawFile(tmp, from, fd);
+  tmp = tmp->next;
+  }
+  output(fd, "\n");
+}
 
 static void  buidFileAndFolder(t_node** head, const char* from, const int* fd) {
   t_node* tmp = *head;
   char folderName[MAXPATHLEN];
   bzero(folderName, MAXPATHLEN);
-  memcpy(folderName, capName("root_folder"), strlen("root_folder") + 1);
   if (tmp && tmp->data.type == folder) {
     memcpy(folderName, capName(tmp->data.name), strlen(tmp->data.name) + 1);
   }
@@ -44,27 +51,37 @@ static void  buidFileAndFolder(t_node** head, const char* from, const int* fd) {
       write(*fd, "\n", 1);
     }
     else if (tmp->data.type % 2 == 0) {
-      drawFile(tmp, from, *fd);
+      putAllFiles(tmp, from, *fd);
+      return;
     }
     tmp = tmp->next;
   }
 }
 
+
+void printRoot(const char* root, outFileData* data) {
+  output(data->fd, "F_%s\t\t=\t\t%s\n", root, data->workingDirectory);
+}
+
 static ssize_t readList(t_node** head, outFileData* data) {
   const int fd = data->fd;
-  buidFileAndFolder(head, NULL ,&fd);
+  const char* truckPath = strrchr(data->workingDirectory, '/');
+  //! switch that line for windows or other case that path don't hold a /
+  printRoot(truckPath + 1, data);
+  buidFileAndFolder(head, truckPath + 1, &fd);
   return 0;
 }
 
 ssize_t drawName(const char* name, const int fd) {
-  char buff[MAXPATHLEN + 20];
-  memcpy(buff, "NAME\t\t=\t\t", 9);
-  const size_t nlen = strlen(name);
-  memcpy(buff + 9, name, nlen);
-  buff[nlen + 9] = '\n';
-  buff[nlen + 10] = '\n';
-  buff[nlen + 11] = '\0';
-  return write(fd, buff, nlen + 11);
+  return output(fd, "NAME\t\t=\t\t%s\n\n", name);
+}
+
+static ssize_t drawCompiler(outFileData* data) {
+  ssize_t total = 0;
+  total += output(data->fd, "\n\rDEBUG\t\t\t=\t\t-g\n\n", data->cCompiler);
+  total += output(data->fd, "CFLAGS\t\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n", data->cCompiler);
+  total += output(data->fd, "CXXFLAGS\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n\n\n", data->cCompiler);
+  return total;
 }
 
 ssize_t buildMakefile(outFileData* data) {
@@ -74,9 +91,9 @@ ssize_t buildMakefile(outFileData* data) {
   if (!newFile("Makefile", data))
     return -1;
   totalBytes += header(data->fd, "#", hardcodeName, hardcodePname, "Makefile");
+  totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data->fd);
   readList(&data->header, data);
-
   closeFile(data);
   return totalBytes;
 }

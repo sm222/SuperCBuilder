@@ -171,6 +171,7 @@ outFileData makerSetup(t_SCB* in, int mode) {
   bzero(&data, sizeof(data));
   data.header = in->node;
   data.outputType = mode;
+  data.workingDirectory = in->path;
   return data;
 }
 
