@@ -210,9 +210,9 @@ int setStart(void* in) {
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);
     printfolder(SCB.node, 0, 1);
+
     outFileData data = makerSetup(&SCB, 0);
     makerStart(&data);
-    (void)data;
   }
   freeNode(&SCB.node);
   return SCB.error;
