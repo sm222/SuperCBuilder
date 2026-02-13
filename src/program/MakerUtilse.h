@@ -10,8 +10,16 @@
 # include <stdarg.h>
 
 
+enum {
+  makefile = 0,
+  bash     = 1,
+  cmake    = 2,
+};
+
 static const char* const buildFileLanguage[] = {
   "Makefile:#",
+  "bash:#",
+  "?",
   0x0,
 };
 
@@ -21,28 +29,34 @@ typedef struct s_outVar {
 } t_outVar;
 
 typedef struct {
+  bool      cpp;
   int       fd;
   int       configFd;
   char*     filename;
+  char*     projectname;
   char**    var;
   size_t    varByte;
   size_t    varArray;
   t_node*   header;
   int       outputType;
   char*     workingDirectory;
-  char*     cCompiler;
-  char*     cppCompiler;
+  char      cCompiler[100];
+  char      cppCompiler[100];
+  char*     config[PATH_MAX];
   t_outVar* outVar;
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);
-void         makerStart(outFileData* data);
+int          makerStart(outFileData* data);
 
 size_t      output(int fd, const char* s, ...);
 size_t      header(int fd, const char* comment, const char* uName, const char* pName, const char* fType);
 
 bool        newFile(char* name, outFileData* data);
 void        closeFile(outFileData* data);
+
+char*       findCommentFromType(int type);
+
 
 t_outVar*   makeOutVarLast(const char* name, t_outVar** list);
 void        freeOutVar(t_outVar** list);

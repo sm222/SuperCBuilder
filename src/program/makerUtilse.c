@@ -171,14 +171,15 @@ size_t header(int fd, const char* comment, const char* uName, const char* pName,
   time_t rawtime;
   struct tm* timeinfo;
   time(&rawtime);
+  const char* maker = uName ? uName : "unknown";
   timeinfo = localtime(&rawtime);
   size_t out = 0;
   out += output(fd, "%s - %s - %s\n", comment, comment, comment);
   out += output(fd, "%s %s Make whit scb on %s",comment, fType, asctime(timeinfo));
-  out += output(fd, "%s build by %s\n", comment, uName);
+  out += output(fd, "%s build by %s\n", comment, maker);
   out += output(fd, "%s project name -> %s\n", comment, pName);
   out += output(fd, "%s - %s - %s\n", comment, comment, comment);
-  out += output(fd, "\n\n\n\n");
+  out += output(fd, "\n\n");
   return out;
 }
 
@@ -220,17 +221,23 @@ outFileData makerSetup(t_SCB* in, int mode) {
   data.header = in->node;
   data.outputType = mode;
   data.workingDirectory = in->path;
+  memcpy(data.cCompiler,   "cc", 3);
+  memcpy(data.cppCompiler, "c++", 4);
+  memcpy(data.config, "config.scb", 12);
   return data;
 }
 
 # include "makerMakeFile.h"
 
-void makerStart(outFileData *data) {
+int makerStart(outFileData *data) {
+  ssize_t outB = 0;
   if (!data)
-    return ;
-  if (data->outputType == 0) {
-    buildMakefile(data);
+    return -1;
+  if (data->outputType == makefile) {
+    outB = buildMakefile(data);
   }
+  printf("total byte prints > %zu\n", outB);
+  return 0;
 }
 
 bool newFile(char *name, outFileData *data) {
@@ -246,6 +253,12 @@ void closeFile(outFileData *data) {
   close(data->fd);
 }
 
+char* findCommentFromType(int type) {
+  if (type >= 0) {
+    return strchr(buildFileLanguage[type], ':') + 1;
+  }
+  return "";
+}
 
 /*
 
