@@ -195,11 +195,9 @@ void moveFolderUp(t_node** list) {
 
 # include "MakerUtilse.h"
 
-int setStart(void* in) {
-  t_setting* ptr = in;
-  (void)ptr; //! user later for flags
+int scb(void* data) {
   t_SCB  SCB;
-  //
+  (void)data;
   setup(&SCB);
   //
   SCB.error = mapDir(SCB.path, &SCB.node, 10);
@@ -209,8 +207,15 @@ int setStart(void* in) {
     //! add flag for visual
     //printfolder(SCB.node, 0, 1);
     outFileData data = makerSetup(&SCB, 0);
-    makerStart(&data);
+    SCB.error = makerStart(&data);
   }
   freeNode(&SCB.node);
   return SCB.error;
+}
+
+
+int setStart(void* in) {
+  t_setting* ptr = in;
+  ptr->programFt = &scb;
+  return 0;
 }

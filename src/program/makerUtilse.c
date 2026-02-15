@@ -153,7 +153,7 @@ static char* get_next_line(int fd) {
   return (safe_return(&book, &t_val));
 }
 
-size_t output(int fd, const char* s, ...) {
+size_t output(int fd, const char * s, ...) {
   char buffer[bSize + 1];
   va_list list;
   va_start(list, s);
@@ -188,8 +188,7 @@ size_t header(int fd, const char* comment, const char* uName, const char* pName,
 int superStrcmp(const char* s1, const char* s2, size_t n) {
   if(!s1 || !s2 || n == 0)
     return -1;
-  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && n--) {
-    printf("%c|%c\n", *s1, *s2);
+  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && --n) {
     s1++;
     s2++;
   }
@@ -275,37 +274,45 @@ static size_t findDot(const char* s) {
   return 0;
 }
 
+
 static int getFileType(outFileData* data) {
   if (data->var && data->var[0]) {
-    if (strncmp(data->var[0], "TYPE:", 5) == 0) {
-      printf("AAA\n");
-      size_t i = 0;
-      if (superStrcmp(data->var[0] + 5, buildFileLanguage[i], findDot(buildFileLanguage[i])) == 0) {
-        data->outputType = i;
-        printf("%zu\n", i);
+    size_t i = 0;
+    while (buildFileLanguage[i]) {
+      if (strncmp(data->var[0], "TYPE:", 5) == 0) {
+        size_t dotP = findDot(buildFileLanguage[i]);
+        if (superStrcmp(data->var[0] + 5, buildFileLanguage[i], dotP) == 0 \
+        && ENDL(*(data->var[0] + 5 + dotP))) {
+          data->outputType = i;
+          printf("type chose - %s\n", buildFileLanguage[i]);
+          return 0;
+        }
       }
+      i++;
     }
-    else {
-      fprintf(stderr, "scb: bad headder\n%s\n", data->var[0]);
-    }
+    fprintf(stderr, "scb: bad headder\n%s\n", data->var[0]);
+    return 1;
   } else {
     fprintf(stderr, "scb: bad headder\n");
+    return 1;
   }
   return 0;
 }
 
 int makerStart(outFileData* data) {
   ssize_t outB = 0;
+  int error = 0;
   if (!data || testConfigFile(data))
-    return -1;
+    return 1;
   if (data->configFd) {
-    getFileType(data);
+    error = getFileType(data);
   }
-  if (data->outputType == makefile) {
+  if (data->outputType == makefile && !error) {
     outB = buildMakefile(data);
   }
   printf("total byte prints > %zu\n", outB);
-  return 0;
+  closeFile(data);
+  return error;
 }
 
 bool newFile(char *name, outFileData *data) {

@@ -1,4 +1,4 @@
-TYPE:MakeFile
+TYPE:makefile
 
 name  = test
 

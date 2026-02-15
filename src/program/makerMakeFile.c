@@ -151,6 +151,5 @@ ssize_t buildMakefile(outFileData* data) {
   totalBytes += drawMakeRule(data);
   totalBytes += drawEnd(data);
   freeOutVar(&data->outVar);
-  closeFile(data);
   return totalBytes;
 }

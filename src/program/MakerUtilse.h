@@ -9,6 +9,8 @@
 # include "scb.h"
 # include <stdarg.h>
 
+# define ENDL(c)    ((c == '\n') || (c == '\0'))
+
 
 enum {
   makefile = 0,
