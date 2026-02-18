@@ -146,7 +146,7 @@ ssize_t buildMakefile(outFileData* data) {
   totalBytes += header(data->fd, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "Makefile");
   totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data->fd);
-  totalBytes += readList(&data->header, data);
+  totalBytes += readList(&data->scb->node, data);
   totalBytes += drawObjectVar(data);
   totalBytes += drawMakeRule(data);
   totalBytes += drawEnd(data);

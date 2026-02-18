@@ -39,13 +39,14 @@ typedef struct {
   char**    var;
   size_t    varByte;
   size_t    varArray;
-  t_node*   header;
+  t_SCB*    scb;
   int       outputType;
   char*     workingDirectory;
   char      cCompiler[100];
   char      cppCompiler[100];
   char*     config[PATH_MAX];
   t_outVar* outVar;
+
 } outFileData;
 
 int  superStrcmp(const char* s1, const char* s2, size_t n);

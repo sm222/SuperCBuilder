@@ -2,7 +2,9 @@
 # define NODE_H
 
 
+# include "../dataType.h"
 # include <stdlib.h> // calloc free
+
 
 typedef struct  {
   char*  name;

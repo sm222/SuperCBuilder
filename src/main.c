@@ -72,7 +72,7 @@ static int base(t_mainData data, int fdIn, int fdOut) {
       // programe here (ex: add file)
     }
     if (read_byte(programSetting.flags, setting_continue_on_error) && status)
-      return status;
+      programSetting.current = programSetting.ac;
     put_str_error(&programSetting, RED, "code %d", status);
   }
   if (programSetting.programFt)

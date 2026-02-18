@@ -2,13 +2,14 @@
 # define FILE_TYPE_H
 
 typedef enum {
-  unknown = -1,
-  folder  = 0,
-  cFile   = 2,
-  hFile   = 3,
-  cppFile = 4,
-  hppFile = 5,
-  tppFile = 6,
+  unknown    = -1,
+  folder     = 0,
+  cFile      = 2,
+  hFile      = 3,
+  cppFile    = 4,
+  hppFile    = 5,
+  tppFile    = 6,
+  configFile = 7,
 } t_file_type;
 
 
@@ -20,6 +21,7 @@ static const char* const fileType[] = {
   ".cpp",
   ".hpp",
   ".tpp",
+  ".scb",
   0x0,
 };
 

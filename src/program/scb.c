@@ -13,6 +13,8 @@ static char* getFileTypeSimble(int n) {
     return "HPP";
   if (n == tppFile)
     return "TPP";
+  if (n == configFile)
+    return "SCB";
   return "error!";
 }
 
@@ -205,7 +207,7 @@ int scb(void* data) {
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);
     //! add flag for visual
-    //printfolder(SCB.node, 0, 1);
+    printfolder(SCB.node, 0, 1);
     outFileData data = makerSetup(&SCB, 0);
     SCB.error = makerStart(&data);
   }

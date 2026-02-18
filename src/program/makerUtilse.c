@@ -218,7 +218,7 @@ int read_file(outFileData* file) {
 outFileData makerSetup(t_SCB* in, int mode) {
   outFileData data;
   bzero(&data, sizeof(data));
-  data.header = in->node;
+  data.scb = in;
   data.outputType = mode;
   data.workingDirectory = in->path;
   memcpy(data.cCompiler,   "cc", 3);
@@ -237,7 +237,7 @@ static void makeConfig(void) {
   close(fd);
 }
 
-static int testConfigFile(outFileData* data) {
+int testConfigFile(outFileData* data) {
   char buff[MAXPATHLEN * 2];
   sprintf(buff, "%s/%s", data->workingDirectory, data->configFilename);
   if (access(buff, R_OK) == 0) {
@@ -275,7 +275,7 @@ static size_t findDot(const char* s) {
 }
 
 
-static int getFileType(outFileData* data) {
+int getFileType(outFileData* data) {
   if (data->var && data->var[0]) {
     size_t i = 0;
     while (buildFileLanguage[i]) {
@@ -299,14 +299,28 @@ static int getFileType(outFileData* data) {
   return 0;
 }
 
+void lookForConfigFile(outFileData* data) {
+  size_t nb = 0;
+  printf("- - - - - - - - - - - - - -\n");
+  for (t_node* tmp = data->scb->node; tmp; tmp = tmp->next) {
+    if (tmp->data.type == configFile) {
+      char* p = strrchr(data->scb->path, '/');
+      printf("[%zu]%s > %s\n", nb, p, tmp->data.name);
+      nb++;
+    }
+  }
+  printf("config file found - %zu\n", nb);
+}
+
 int makerStart(outFileData* data) {
   ssize_t outB = 0;
   int error = 0;
-  if (!data || testConfigFile(data))
-    return 1;
-  if (data->configFd) {
-    error = getFileType(data);
-  }
+  //if (!data || testConfigFile(data))
+  //  return 1;
+  //if (data->configFd) {
+  //  error = getFileType(data);
+  //}
+  lookForConfigFile(data);
   if (data->outputType == makefile && !error) {
     outB = buildMakefile(data);
   }
