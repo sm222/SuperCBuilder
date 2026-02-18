@@ -223,7 +223,7 @@ outFileData makerSetup(t_SCB* in, int mode) {
   data.workingDirectory = in->path;
   memcpy(data.cCompiler,   "cc", 3);
   memcpy(data.cppCompiler, "c++", 4);
-  memcpy(data.configFilename, "config.scb", 12);
+  memcpy(data.configFilename, "config.scb", 11);
   return data;
 }
 
@@ -235,6 +235,19 @@ static void makeConfig(void) {
     perror("scb");
   }
   close(fd);
+}
+
+char* dialogBox(const char* question, const char* option, unsigned int reposeSize) {
+  //fprintf(stderr, "no config file found, do you want to continue?\n");
+  //fprintf(stderr, "[y] yes | [m] make one | anyting else no\n");
+  fprintf(stderr, "%s\t\n", question);
+  fprintf(stderr, "%s\t\n", option);
+  if (reposeSize == 0)
+    return 0;
+  static char out[1001];
+  ssize_t l = read(STDIN_FILENO, out, reposeSize);
+  out[l] = 0;
+  return out;
 }
 
 int testConfigFile(outFileData* data) {
@@ -250,13 +263,10 @@ int testConfigFile(outFileData* data) {
     return 0;
   }
   perror(data->configFilename);
-  char out[2];
-  fprintf(stderr, "no config file found, do you want to continue?\n");
-  fprintf(stderr, "[y] yes | [m] make one | anyting else no\n");
-  read(STDIN_FILENO, out, 1);
-  if (out[0] == 'y')
+  const char* respose = dialogBox("A", "B", 1);
+  if (respose[0] == 'y')
     return 0;
-  if (out[0] == 'm') {
+  if (respose[0] == 'm') {
     makeConfig();
     return 1;
   }
