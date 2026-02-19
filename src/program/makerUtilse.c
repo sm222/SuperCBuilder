@@ -223,7 +223,7 @@ outFileData makerSetup(t_SCB* in, int mode) {
   data.workingDirectory = in->path;
   memcpy(data.cCompiler,   "cc", 3);
   memcpy(data.cppCompiler, "c++", 4);
-  memcpy(data.configFilename, "config.scb", 11);
+  memcpy(data.configFilename, "", 1);
   return data;
 }
 

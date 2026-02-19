@@ -12,8 +12,8 @@
 //# include <ncurses.h>
 # include <stdbool.h>
 # include <sys/param.h>
+# include "argv.h"
 
-#define SETUP_EXTERN
 
 // https://stackoverflow.com/questions/142508/how-do-i-check-os-with-a-preprocessor-directive
 
@@ -72,6 +72,8 @@ typedef struct mainData {
 # include "flags.h"
 
 typedef  int (*avProsses)(void* , const char*);
+typedef  int (*avSingle)(void*);
+typedef  int (*avDouble)(void*);
 
 typedef  int (*program)(void*);
 
@@ -83,11 +85,14 @@ typedef struct setting {
   int                jump;
   const char* const* av;
   const char*        programeName;
+  t_avData           avNoFlags;
   int32_t            flags;
   const char* const* env;
   t_flagValue*       flagValue;
   avProsses          avFt;
   program            programFt;
+  avSingle           ftsingle;
+  avDouble           ftdouble;
 } t_setting;
 
 

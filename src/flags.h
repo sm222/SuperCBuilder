@@ -1,12 +1,6 @@
 #ifndef __FLAGS__
 # define __FLAGS__
 
-enum valueArg {
-  e_bool,
-  e_next,
-  e_equal,
-};
-
 # define FLAG_NAME_LEN 100
 
 typedef struct s_flagValue {

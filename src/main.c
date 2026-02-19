@@ -2,8 +2,6 @@
 #include "dataType.h"
 #include "utilse.h"
 #include "parsing.h"
-#include "flags.h"
-
 
 # ifdef NAME_CHECK
 static bool test_name(const char* name) {
@@ -41,16 +39,19 @@ static int base(t_mainData data, int fdIn, int fdOut) {
     .stdOut       = fdOut,       //
     .ac           = data.ac,     //
     .current      = 1,           // skip programe name
-    .jump         = 1,
+    .jump         = 1,           //
     .av           = data.av,     //
     .programeName = data.av[0],  // program name
     .flags        = 0,           // flag
     .env          = data.env,    //
     .flagValue    = NULL,        //
     .avFt         = NULL,        //
-    .programFt    = NULL,        //*
+    .programFt    = NULL,        //
+    .ftsingle     = NULL,        //
+    .ftdouble     = NULL,        //*
   };
   //
+  # define SETUP_EXTERN
   # ifdef NAME_CHECK
   if (!test_name(data.av[0]))
     return 1;
@@ -60,24 +61,39 @@ static int base(t_mainData data, int fdIn, int fdOut) {
     return 1;
   # endif
   env_parsing(&programSetting);
-  for (; programSetting.current < programSetting.ac; programSetting.current += programSetting.jump) {
+  av_setup(&programSetting.avNoFlags, programSetting.ac);
+  bool error = false;
+  for (; programSetting.current < programSetting.ac; \
+  programSetting.current += programSetting.jump) {
     if (strncmp(programSetting.av[programSetting.current], "--", 2) == 0) {
-      status = parsing_get_double(&programSetting);
+      if (programSetting.ftdouble) {
+        status = programSetting.ftdouble(&programSetting);
+      } else {
+        status = parsing_get_double(&programSetting);
+      }
     }
     else if (programSetting.av[programSetting.current][0] == '-') {
-      status = parsing_get_single(&programSetting);
+      if (programSetting.ftsingle) {
+        status = programSetting.ftsingle(&programSetting);
+      } else {
+        status = parsing_get_single(&programSetting);
+      }
     } else {
-      if (programSetting.avFt)
+      if (programSetting.avFt) {
         status = programSetting.avFt(&programSetting, programSetting.av[programSetting.current]);
-      // programe here (ex: add file)
+      } else {
+        av_add(&programSetting.avNoFlags, programSetting.av[programSetting.current]);
+      }
     }
-    if (read_byte(programSetting.flags, setting_continue_on_error) && status)
+    error = read_byte(programSetting.flags, setting_continue_on_error);
+    if (error && status)
       programSetting.current = programSetting.ac;
-    put_str_error(&programSetting, RED, "code %d", status);
+    put_str_error(&programSetting, RED, "code %d", status);// debug only
   }
-  if (programSetting.programFt)
-    status = programSetting.programFt(&programSetting);
   // programe here
+  if (programSetting.programFt && !(error && status))
+    status = programSetting.programFt(&programSetting);
+  av_free(&programSetting.avNoFlags);
   return status;
 }
 
