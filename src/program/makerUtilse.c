@@ -245,7 +245,7 @@ char* dialogBox(const char* question, const char* option, unsigned int reposeSiz
   if (reposeSize == 0)
     return 0;
   static char out[1001];
-  ssize_t l = read(STDIN_FILENO, out, reposeSize);
+  ssize_t l = read(STDIN_FILENO, out, reposeSize); //! add safety
   out[l] = 0;
   return out;
 }
