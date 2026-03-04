@@ -1,8 +1,9 @@
-# BaseBashProgram
-use to start making a bash program like 'ls' or 'echo'
+# SuperCBulder
+program that use your files tree to make a makefile or other
+build system
 
-
-
+# how to use
+todo:
 
 ## var
 

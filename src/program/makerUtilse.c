@@ -367,7 +367,6 @@ static int closeConfigFile(outFileData* data) {
     close(data->configFile.fd);
     size_t i = 0;
     while (data->configFile.rawData[i]) {
-      printf("%s\n" , data->configFile.rawData[i]);
       free(data->configFile.rawData[i]);
       i++;
     }
@@ -378,6 +377,22 @@ static int closeConfigFile(outFileData* data) {
   return 1;
 }
 
+char* readConfigFileLine(outFileData* data) {
+  t_configValue* conf = &data->configFile;
+  conf->value = conf->rawData[conf->read];
+  if (!conf->value) {
+    conf->read = 0;
+  }
+  conf->read++;
+  return conf->value;
+}
+
+static void printVar(outFileData* data) {
+  printf("%lu\n", data->var.size);
+  for (size_t i = 0; i < data->var.size; i++) {
+    printf("%s[%c]\n", reserveVarName[i], data->var.varVAlue[i] ? 'x' : ' ');
+  }
+}
 
 int makerStart(outFileData* data) {
   ssize_t outB = 0;
@@ -400,6 +415,7 @@ int makerStart(outFileData* data) {
     data->configFile.name = getConfigName(data, n);
   }
   openConfigFile(data);
+  printVar(data);
   if (data->outputType == makefile && !error) {
     outB = buildMakefile(data);
   }

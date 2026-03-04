@@ -17,6 +17,8 @@
 # define WITCH_FILE "multiple file found, witch one want to be use"
 # define WITCH_FILE_QUESTION "[c] continue | [m] make a config file | \
  else stop"
+
+
 enum {
   makefile = 0,
   bash     = 1,
@@ -55,6 +57,20 @@ typedef struct configValue {
   size_t   readV;
 } t_configValue;
 
+enum varReserveName {
+  cc,
+  cxx,
+  name,
+  namex,
+  ing,
+  cr,
+  dep,
+};
+
+typedef struct s_reserveVar {
+  size_t size; //? set size too reserveVarName
+  bool  varVAlue[sizeof(reserveVarName) / sizeof(char*)];
+} t_reserveVar;
 
 typedef struct {
   bool        cpp;
@@ -71,6 +87,7 @@ typedef struct {
   char*       config[PATH_MAX];
   t_outVar*   outVar;
   //
+  t_reserveVar  var;
   t_configValue configFile;
 } outFileData;
 
