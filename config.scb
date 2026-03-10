@@ -1,5 +1,5 @@
-NAME:scb
-
+NAME:
+  scb \# name
 #NAMEX:.out
 
 MAXDEPH: 5

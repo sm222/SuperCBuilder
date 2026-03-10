@@ -381,7 +381,17 @@ void printVar(outFileData* data) {
   }
 }
 
-int  removeEndl(char* value) {
+int removeEndlP(char* value, size_t p) {
+  if (!value)
+    return 0;
+  if (value[p] == '\n') {
+    value[p] = 0;
+    return 1;
+  }
+  return 0;
+}
+
+int removeEndl(char* value) {
   if (!value)
     return 0;
   size_t l = strlen(value) - 1;
@@ -428,7 +438,7 @@ static bool isVar(const char* line, const char* varName, size_t l) {
 
 
 static ssize_t addTo(char* to, const char* add, size_t curentLen, bool addSpace) {
-  if (MAX_VAR_NAME_LEN - (curentLen + addSpace) > 0) {
+  if (MAX_VAR_NAME_LEN - (curentLen + addSpace) <= 0) {
     fprintf(stderr, "scb: var is too long\n");
     return 0;
   }
@@ -440,7 +450,7 @@ static ssize_t addTo(char* to, const char* add, size_t curentLen, bool addSpace)
 }
 
 static ssize_t addToc(char* to, char c, size_t curentLen) {
-  if (MAX_VAR_NAME_LEN - curentLen > 0) {
+  if (MAX_VAR_NAME_LEN - curentLen <= 0) {
     fprintf(stderr, "scb: var is too long\n");
     return 0;
   }
@@ -476,17 +486,29 @@ static int readVar(outFileData* data, const char* s, const size_t cl) {
   return 0;
 }
 
-static int chekVarType(outFileData* data, size_t* index, ssize_t* currentLen) {
+static int chekToken(outFileData* data, size_t* index, ssize_t* currentLen, char* s) {
+  if (*s == '\\') {
+    addToc(data->configFile.buffer, s[1], *currentLen);
+    return 2;
+  }
+  
+  return 0;
+}
+
+int chekVarType(outFileData* data, size_t* index, ssize_t* currentLen) {
   const char* s = data->configFile.rawData[++(*index)];
   (void)currentLen;
   if (!s) {
     return 1;
   }
   size_t i = skipWhiteSpace(s, 0);
-  printf(">>in |%s| %zu\n", s, i);
   if (i == 0) // no space = var or any elegal info
     return 1;
+  addToc(data->configFile.buffer, ' ', (*currentLen)++);
   while (s[i]) {
+    if (s[i] == '\\') {
+      
+    }
     if (s[i] == '%') {
       const int rez = readVar(data, s + i, *index);
       if (rez == -1)
@@ -494,8 +516,7 @@ static int chekVarType(outFileData* data, size_t* index, ssize_t* currentLen) {
       i += rez;
     }
     else {
-      addToc(data->configFile.buffer, s[i], *currentLen);
-      (*currentLen)++;
+      addToc(data->configFile.buffer, s[i], (*currentLen)++);
     }
     i++;
   }
@@ -517,7 +538,9 @@ char* readVariable(outFileData* data, int var) {
     i++;
   }
   curentLen += addTo(data->configFile.buffer, data->configFile.rawData[i] + (varLen + 1), curentLen, false);
-  while (!chekVarType(data, &i, &curentLen)) {}
+  while (!chekVarType(data, &i, &curentLen)) {
+    curentLen -= removeEndlP(data->configFile.buffer, curentLen - 1);
+  }
   return data->configFile.buffer;
 }
 
