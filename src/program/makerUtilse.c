@@ -474,24 +474,24 @@ static bool isLinux(const char* var) {
 }
 
 static int readVar(outFileData* data, const char* s, const size_t cl) {
-  if (*(s - 1) == '\\')
-    return -1;
   s++;
   (void)cl;
-  if (isLinux(s) && SYSTYPE == SYS_LINUX) {
-    
-  }
-  //! //! add win, add mac
   (void)data;
+  if (isLinux(s) && SYSTYPE == SYS_LINUX) { return 5; }
+  //! //! add win, add mac
+  size_t i = 0;
+  
   return 0;
 }
 
 static int chekToken(outFileData* data, size_t* index, ssize_t* currentLen, char* s) {
   if (*s == '\\') {
-    addToc(data->configFile.buffer, s[1], *currentLen);
+    addToc(data->configFile.buffer, s[1], (*currentLen)++);
     return 2;
   }
-  
+  else if (*s == '%') {
+    return readVar(data, s, *currentLen);
+  }
   return 0;
 }
 
