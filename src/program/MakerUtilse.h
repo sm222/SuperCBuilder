@@ -109,7 +109,7 @@ void        printOutVar(t_outVar* head);
 
 
 char*       readVariable(outFileData* data, int var);
-
+char*       readVariableName(outFileData* data, char* name);
 
 int         removeEndl(char* value);
 

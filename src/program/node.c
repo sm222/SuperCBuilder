@@ -88,3 +88,69 @@ void* dellNode(t_node* n) {
   free(n);
   return NULL;
 }
+
+int deledEmty(t_node** list) {
+  if (!list && !*list) {
+    return 0;
+  }
+  int dell = 0;
+  HEADDELL: // first time using it
+  while (*list && IS_FOLDER_EMPTY(((t_node*)*list))) {
+    t_node* tmp = (*list)->next;
+    t_node* tooFree = *list;
+    dellNode(tooFree);
+    *list = tmp;
+    dell++;
+  }
+  t_node* tmp = *list;
+  while (tmp) {
+    if (tmp->next && IS_FOLDER_EMPTY(tmp->next)) {
+      t_node* tooFree = tmp->next;
+      t_node* next = tooFree->next;
+      tmp->next = next;
+      dellNode(tooFree);
+      tmp = *list;
+      dell++;
+      continue ;
+    }
+    if (tmp->data.type == folder) {
+      tmp->data.fsize -= deledEmty(&tmp->child);
+      if (tmp->data.fsize == 0) {
+        goto HEADDELL;
+      }
+    }
+    tmp = tmp->next;
+  }
+  return dell;
+}
+
+static bool isSwap(t_node* n) {
+  if (n && n->next) {
+    if (n->data.type != folder && n->next->data.type == folder)
+      return true;
+  }
+  return false;
+}
+
+static void swapData(t_node* n) {
+  t_node_data tmp = n->data;
+  n->data = n->next->data;
+  n->next->data = tmp;
+  n->child = n->next->child;
+  n->next->child = NULL;
+}
+
+void moveFolderUp(t_node** list) {
+  t_node* tmp = *list;
+  while (tmp) {
+    if (isSwap(tmp)) {
+      swapData(tmp);
+      tmp = *list;
+      continue ;
+    }
+    if (tmp->data.type == folder) {
+      moveFolderUp(&tmp->child);
+    }
+    tmp = tmp->next;
+  }
+}

@@ -97,7 +97,7 @@ ssize_t drawName(const char* name, const int fd, outFileData* data) {
   const char* namexValue = "";
   ssize_t t = 0;
   if (isVarInConfig(Vname, data->var)) {
-    nameValue = readVariable(data, Vname);
+    nameValue = readVariableName(data, "NAME");
   }
   t += output(fd, "NAME\t\t=\t\t%s\n", nameValue);
   if (isVarInConfig(Vnamex, data->var)) {

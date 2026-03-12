@@ -449,7 +449,7 @@ static ssize_t addTo(char* to, const char* add, size_t curentLen, bool addSpace)
   return added;
 }
 
-static ssize_t addToc(char* to, char c, size_t curentLen) {
+ssize_t addToc(char* to, char c, size_t curentLen) {
   if (MAX_VAR_NAME_LEN - curentLen <= 0) {
     fprintf(stderr, "scb: var is too long\n");
     return 0;
@@ -468,59 +468,145 @@ size_t skipWhiteSpace(const char* s, size_t start) {
   return i;
 }
 
-static bool isLinux(const char* var) {
+bool isLinux(const char* var) {
   const int v = strncmp(var, "LINUX", 5);
   return (v == 0 && isspace(var[5]));
 }
 
-static int readVar(outFileData* data, const char* s, const size_t cl) {
-  s++;
-  (void)cl;
-  (void)data;
-  if (isLinux(s) && SYSTYPE == SYS_LINUX) { return 5; }
-  //! //! add win, add mac
+static inline ssize_t findVarLen(const char*s) {
+  ssize_t i = 0;
+  while (s[i] && !isspace(s[i])) { i++; }
+  fprintf(stderr, "VARLEN %zu |%s|\n", i, s);
+  return i;
+}
+
+enum {
+  L_unknown  = -1,
+  L_empty    =  0,
+  L_comment  =  1,
+  L_var      =  2,
+  l_varValue =  3,
+  l_invalid  =  4,
+};
+
+static inline bool valid(int prev, int now) {
+  if (now == l_invalid || now == L_unknown)
+    return false;
+  if (now == l_varValue) {
+    if (prev == L_var || prev == l_varValue) {
+      return true;
+    }
+    return false;
+  }
+  return now >= 0 ? true : false;
+}
+
+static int isLineValid(const char* s) {
+  int lineType = s ? L_unknown : L_empty;
+  if (s) {
+    if (*s == '#' || *s == '\n') { return L_comment; }
+    else if (isdigit(*s) || *s == ':') { return l_invalid; }
+    else if (isspace(*s)) { lineType = l_varValue; }
+    else if (isalpha(*s)) { lineType = L_var; }
+    size_t i = 0;
+    while (s[i]) {
+      if ((!isspace(s[i]) && lineType == l_varValue) || \
+      (s[i] == ':' && lineType == L_var)) {
+        return lineType;
+      }
+      i++;
+    }
+    lineType *= -1; //! flip value to show error
+  }
+  return lineType;
+}
+
+
+int checkIfFileValid(outFileData* data) {
+  if (!data->configFile.fd)
+    return 0;
   size_t i = 0;
-  
+  int prev = L_empty;
+  while (data->configFile.rawData[i]) {
+    const char* l = data->configFile.rawData[i];
+    const int line = isLineValid(l);
+    if (!valid(prev, line)) {
+      fprintf(stderr, "scb: invalid config file\n[%zu]%s\n", i + 1, l);
+      return 1;
+    }
+    i++;
+    prev = line;
+  }
   return 0;
 }
 
-static int chekToken(outFileData* data, size_t* index, ssize_t* currentLen, char* s) {
-  if (*s == '\\') {
-    addToc(data->configFile.buffer, s[1], (*currentLen)++);
-    return 2;
-  }
-  else if (*s == '%') {
-    return readVar(data, s, *currentLen);
-  }
-  return 0;
+static bool checkToc(const char* s) {
+  return (*s == '\\' && *(s + 1) == '%');
 }
 
-int chekVarType(outFileData* data, size_t* index, ssize_t* currentLen) {
-  const char* s = data->configFile.rawData[++(*index)];
-  (void)currentLen;
-  if (!s) {
-    return 1;
-  }
-  size_t i = skipWhiteSpace(s, 0);
-  if (i == 0) // no space = var or any elegal info
-    return 1;
-  addToc(data->configFile.buffer, ' ', (*currentLen)++);
-  while (s[i]) {
-    if (s[i] == '\\') {
-      
+static size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
+  if (*total >= MAX_VAR_NAME_LEN)
+    return 0;
+  const size_t nameLen = findVarLen(name);
+  size_t i = 0;
+  const char* l = NULL;
+  fprintf(stderr, "go find |%s|\n", name);
+  while (data->configFile.rawData[i]) {
+    l = data->configFile.rawData[i];
+    if (i > start) {
+      return nameLen;
     }
-    if (s[i] == '%') {
-      const int rez = readVar(data, s + i, *index);
-      if (rez == -1)
-        return 0;
-      i += rez;
-    }
-    else {
-      addToc(data->configFile.buffer, s[i], (*currentLen)++);
+    if (strncmp(l, name, nameLen) == 0 && l[nameLen] == ':') {
+      break ;
     }
     i++;
   }
-  return 0;//!!
+  size_t j = nameLen + 1;
+  do {
+    varloop:
+    fprintf(stderr, "here %zu %zu\n", i, j);
+    while (l && l[j]) {
+      if (checkToc(l + j)) {
+        addToc(data->configFile.buffer, '%', *total);
+        j += 2;
+        (*total)++;
+      }
+      else if (l[j] == '%') {
+        j += getValue(data, total, i, l + j + 1);
+      }
+      else {
+        addToc(data->configFile.buffer, l[j], *total);
+        (*total)++;
+        j++;
+      }
+    }
+    removeEndl(data->configFile.buffer);
+    l = data->configFile.rawData[++i];
+    fprintf(stderr, "nl -> %d: %s", isLineValid(l), l);
+    if (isLineValid(l) == l_varValue ) {
+      j = skipWhiteSpace(l, 0);
+      goto varloop;
+    }
+  } while (0);
+  return nameLen;
+}
+
+
+char* readVariableName(outFileData* data, char* name) {
+  if (!name)
+    return NULL;
+  bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
+  ssize_t curentLen = 0;
+  size_t i = 0;
+  while (data->configFile.rawData[i]) {
+    if (isVar(data->configFile.rawData[i], name, strlen(name))) {
+      fprintf(stderr, "find %zu\n", i);
+      curentLen += getValue(data, &curentLen, i, name);
+      break;
+    }
+    i++;
+  }
+  return data->configFile.buffer;
 }
 
 char* readVariable(outFileData* data, int var) {
@@ -538,9 +624,6 @@ char* readVariable(outFileData* data, int var) {
     i++;
   }
   curentLen += addTo(data->configFile.buffer, data->configFile.rawData[i] + (varLen + 1), curentLen, false);
-  while (!chekVarType(data, &i, &curentLen)) {
-    curentLen -= removeEndlP(data->configFile.buffer, curentLen - 1);
-  }
   return data->configFile.buffer;
 }
 
@@ -557,7 +640,7 @@ int makerStart(outFileData* data) {
       return 1;
     }
   } else if (configFile == 1) {
-    printf("config file foud\n");
+    printf("config file found\n");
     data->configFile.name = getConfigName(data, 1);
   }
   else {
@@ -566,9 +649,10 @@ int makerStart(outFileData* data) {
     data->configFile.name = getConfigName(data, n);
   }
   openConfigFile(data);
-  error = checkVar(data);
-  printVar(data);
+  error += checkIfFileValid(data);
+  error += checkVar(data);
   if (data->outputType == makefile && !error) {
+    printVar(data);
     outB = buildMakefile(data);
   }
   closeConfigFile(data);

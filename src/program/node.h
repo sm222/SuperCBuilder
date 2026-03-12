@@ -3,6 +3,7 @@
 
 
 # include "../dataType.h"
+# include "fileType.h"
 # include <stdlib.h> // calloc free
 
 
@@ -32,5 +33,9 @@ int          freeNode(t_node** list);
 t_node*      makeNodeLast(char* name, int type, t_node** list);
 size_t       getNodeLen(t_node* head);
 void*        dellNode(t_node* n);
+
+int          deledEmty(t_node** list);
+
+void         moveFolderUp(t_node** list);
 
 #endif
