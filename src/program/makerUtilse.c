@@ -476,7 +476,6 @@ bool isLinux(const char* var) {
 static inline ssize_t findVarLen(const char*s) {
   ssize_t i = 0;
   while (s[i] && !isspace(s[i])) { i++; }
-  fprintf(stderr, "VARLEN %zu |%s|\n", i, s);
   return i;
 }
 
@@ -557,11 +556,12 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     i++;
   }
   size_t j = nameLen + 1;
+  bool nlValid = false;
   do {
-    varloop:
+    nlValid = false;
     while (l && l[j]) {
       if (l[j] == '%') {
-        j += getValue(data, total, i, l + j + 1) + 1;
+        j += getValue(data, total, i, l + j + 1);
       }
       else {
         addToc(data->configFile.buffer, l[j], *total);
@@ -573,14 +573,14 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     l = data->configFile.rawData[++i];
     if (isLineValid(l) == l_varValue ) {
       j = skipWhiteSpace(l, 0);
-      goto varloop;
+      nlValid = true;
     }
-  } while (0);
+  } while (nlValid);
   return nameLen;
 }
 
 
-char* readVariableName(outFileData* data, char* name) {
+char* readVariableName(outFileData* data, const char* name) {
   if (!name)
     return NULL;
   bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);

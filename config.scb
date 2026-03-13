@@ -1,7 +1,6 @@
 NAME:scb
 #NAMEX:.out
 
-MAXDEPH: 5
 
 
 debug:  -g %test

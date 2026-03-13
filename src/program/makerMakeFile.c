@@ -22,6 +22,14 @@ static ssize_t drawVarName(t_node* tmp, const char* from, const int* fd) {
   return output(*fd, "F_%zu_%s\t\t=\t\t%s/\n\n", tmp->data.id, capName(tmp->data.name), tmp->data.name);
 }
 
+static ssize_t drawVar(outFileData* data, const int name, const char* defaultValue) {
+  const char* val = defaultValue;
+  if (isVarInConfig(name, data->var)) {
+    val =  readVariableName(data, reserveVarName[name]);
+  }
+  return output(data->fd, "%s\t\t=\t\t%s\n", reserveVarName[name], val);
+}
+
 static bool isNextFileValid(t_node* node) {
   while (node && node->next) {
     if (IS_C_CPP(node->next)) {
@@ -92,28 +100,23 @@ static ssize_t readList(t_node** head, outFileData* data) {
   return t;
 }
 
-ssize_t drawName(const char* name, const int fd, outFileData* data) {
-  const char* nameValue = name;
-  const char* namexValue = "";
+ssize_t drawName(const char* name, outFileData* data) {
   ssize_t t = 0;
-  if (isVarInConfig(Vname, data->var)) {
-    nameValue = readVariableName(data, "NAME");
-  }
-  t += output(fd, "NAME\t\t=\t\t%s\n", nameValue);
-  if (isVarInConfig(Vnamex, data->var)) {
-    namexValue = readVariable(data, Vnamex);
-  }
-  t += output(fd, "NAMEX\t\t=\t\t%s\n\n", namexValue);
+  t += drawVar(data, Vname, name);
+  t += drawVar(data, Vnamex, "");
+  t += output(data->fd, "\n\n");
   return t;
 }
 
+
 static ssize_t drawCompiler(outFileData* data) {
   ssize_t total = 0;
-  total += output(data->fd, "CC\t\t=\t%s\n", "cc");
-  total += output(data->fd, "CXX\t\t=\t%s\n", "c++");
+  total += drawVar(data, Vcc, "cc");
+  total += drawVar(data, Vcxx, "c++");
   total += output(data->fd, "\n\rDEBUG\t\t\t=\t\t-g\n\n");
-  total += output(data->fd, "CFLAGS\t\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n");
-  total += output(data->fd, "CXXFLAGS\t\t=\t-Wall -Werror -Wextra $(DEBUG)\n\n\n");
+  total += drawVar(data, VCFLAGS, "-Wall -Werror -Wextra $(DEBUG)");
+  total += drawVar(data, VCXXFLAGS, "-Wall -Werror -Wextra $(DEBUG)");
+  total += output(data->fd, "\n\n\n");
   return total;
 }
 
@@ -159,7 +162,7 @@ ssize_t buildMakefile(outFileData* data) {
     return -1;
   totalBytes += header(data->fd, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "Makefile");
   totalBytes += drawCompiler(data);
-  totalBytes += drawName(hardcodePname, data->fd, data);
+  totalBytes += drawName(hardcodePname, data);
   totalBytes += readList(&data->scb->node, data);
   totalBytes += drawObjectVar(data);
   totalBytes += drawMakeRule(data);

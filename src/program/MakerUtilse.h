@@ -45,8 +45,9 @@ static const char* const reserveVarName[] = {
   "CFLAGS",
   "CXXFLAGS",
   "ING",
-  "CR",
-  "DEP",
+  "PROG",
+  "LIB",
+  "BUPLIB",
   0x0,
 };
 
@@ -67,8 +68,9 @@ enum varReserveName {
   VCFLAGS,
   VCXXFLAGS,
   Ving,
-  Vcr,
-  Vdep,
+  Vprog,
+  Vlib,
+  Vpublib,
 };
 
 typedef struct s_reserveVar {
@@ -109,7 +111,7 @@ void        printOutVar(t_outVar* head);
 
 
 char*       readVariable(outFileData* data, int var);
-char*       readVariableName(outFileData* data, char* name);
+char*       readVariableName(outFileData* data, const char* name);
 
 int         removeEndl(char* value);
 
