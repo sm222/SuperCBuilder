@@ -5,15 +5,7 @@
 
 # ifdef NAME_CHECK
 static bool test_name(const char* name) {
-  # if (SYSTYPE == SYS_LINUX) || (SYSTYPE == SYS_MAC)
-    const char sep = '/';
-  # endif
-  # if SYSTYPE == SYS_WIN
-    const char sep = '\\';
-  # endif
-  # if SYSTYPE == -1 // safety
-    const char sep = '/';
-  # endif
+  const char sep = FILE_SEP;
   const char* cut = strrchr(name, sep);
   if (!cut || !cut[0]) {
     return false;

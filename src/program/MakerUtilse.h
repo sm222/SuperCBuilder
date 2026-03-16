@@ -11,13 +11,15 @@
 
 # define ENDL(c)    ((c == '\n') || (c == '\0'))
 
-# define NO_CONFIG_FILE "no config file found, \
- you want to make one or continue whit out it?"
+# define NO_CONFIG_FILE "no config file found," \
+  " you want to make one or continue whit out it?"
 
 # define WITCH_FILE "multiple file found, witch one want to be use"
-# define WITCH_FILE_QUESTION "[c] continue | [m] make a config file | \
- else stop"
+# define WITCH_FILE_QUESTION "[c] continue | [m] make a config file |" \
+  " else stop"
 
+# define MULT_COMPILE_RULE "scb: multiple compile rule define," \
+  " only one at the time can be use\n"
 
 enum {
   makefile = 0,
@@ -45,6 +47,7 @@ static const char* const reserveVarName[] = {
   "CFLAGS",
   "CXXFLAGS",
   "ING",
+  "DEP",
   "PROG",
   "LIB",
   "BUPLIB",
@@ -68,6 +71,7 @@ enum varReserveName {
   VCFLAGS,
   VCXXFLAGS,
   Ving,
+  Vdep,
   Vprog,
   Vlib,
   Vpublib,
@@ -111,7 +115,6 @@ void        printOutVar(t_outVar* head);
 
 int         isVarInConfig(int var, t_reserveVar varList);
 
-char*       readVariable(outFileData* data, int var);
 char*       readVariableName(outFileData* data, const char* name);
 
 int         removeEndl(char* value);

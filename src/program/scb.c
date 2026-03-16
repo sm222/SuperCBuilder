@@ -59,7 +59,7 @@ static int testFolderList(const char* folder) {
 
 static int isValidFolder(const char* path) {
   if (path) {
-    const char* dirTruck = strrchr(path, '/');
+    const char* dirTruck = strrchr(path, FILE_SEP);
     if (dirTruck && testFolderList(dirTruck)) {
       fprintf(stdout, "%s is ignore\n", dirTruck + 1);
       return 1;

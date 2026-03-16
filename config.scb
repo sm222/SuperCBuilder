@@ -2,11 +2,10 @@ NAME:scb
 
 CC:gcc
 
-debug:  -g %test
+debug:-g
 
-
-test: %debug
-
+default: 
+  -D=HELLO
 
 test:
   %LINUX   -D VAR=A
@@ -21,9 +20,9 @@ ING:
   test
 
 
-CR:
+PROG:
   %debug
-  %test
+  %default
 
 DEP:
-  echo 'hello world!'
+  @echo hello world!

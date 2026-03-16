@@ -24,12 +24,19 @@
 
 # if (unix || __unix || __unix__ || __linux__)
 #  define SYSTYPE SYS_LINUX
+#  define FILE_SEP '/'
 # elif (_WIN32 || _WIN64 || __CYGWIN__)
 #  define SYSTYPE SYS_WIN
+#  define FILE_SEP '\\'
 # elif (__APPLE__ || __MACH__)
+#  define FILE_SEP '/'
 #  define SYSTYPE SYS_MAC
 # else
 #  define SYSTYPE -1
+# endif
+
+# ifndef FILE_SEP
+#  error  "no file separator define"
 # endif
 
 # ifndef COLORS

@@ -12,6 +12,9 @@ static char* capName(const char* name) {
   return newName;
 }
 
+inline static short printnl(const int fd) {
+  return write(fd, "\n", 1);
+}
 
 static ssize_t drawVarName(t_node* tmp, const char* from, const int* fd) {
   if (from)
@@ -49,11 +52,11 @@ ssize_t putAllFiles(outFileData* data, t_node* tmp, const char* from, const int 
     if (IS_CPP(tmp)) {
       data->cpp = true;
     }
-    if (IS_C_CPP(tmp) && !IS_FOLDER(tmp))
+    if (IS_C_CPP(tmp))
       t += drawFile(tmp, from, fd);
     tmp = tmp->next;
   }
-  t += output(fd, "\n");
+  t += printnl(fd);
   return t;
 }
 
@@ -75,8 +78,10 @@ static bool testIsIgnore(const char* name, const char* list) {
   size_t end = 0;
   while (list[start]) {
     extractVar(list, start, &end);
-    if (strncmp(list + start, name, end) == 0)
+    if (strncmp(list + start, name, end) == 0) {
+      fprintf(stderr, "skip > %s\n", name);
       return true;
+    }
     start += end + 1;
   }
   return false;
@@ -97,7 +102,7 @@ static ssize_t  buidFileAndFolder(outFileData* data, t_node** head, const char* 
       snprintf(folderName, MAXPATHLEN, "%zu_%s", tmp->data.id, capName(tmp->data.name));
       t += drawVarName(tmp, from ,fd);
       t += buidFileAndFolder(data, &tmp->child, folderName, fd);
-      t += write(*fd, "\n", 1);
+      t += printnl(*fd);
     }
     else if (IS_FILE(tmp)) {
       t += putAllFiles(data, tmp, from, *fd);
@@ -116,7 +121,7 @@ static ssize_t printRoot(const char* root, outFileData* data) {
 static ssize_t readList(t_node** head, outFileData* data) {
   ssize_t t = 0;
   const int fd = data->fd;
-  const char* truckPath = strrchr(data->workingDirectory, '/');
+  const char* truckPath = strrchr(data->workingDirectory, FILE_SEP);
   //! switch that line for windows or other case that path don't have a /
   t += printRoot(truckPath + 1, data);
   //
@@ -139,7 +144,8 @@ static ssize_t drawCompiler(outFileData* data) {
   ssize_t total = 0;
   total += drawVar(data, Vcc, "cc");
   total += drawVar(data, Vcxx, "c++");
-  total += output(data->fd, "\n\rDEBUG\t\t\t=\t\t-g\n\n");
+  //! remove later v
+  total += output(data->fd, "\n\nDEBUG\t\t\t=\t\t-g\n\n");
   total += drawVar(data, VCFLAGS, "-Wall -Werror -Wextra $(DEBUG)");
   total += drawVar(data, VCXXFLAGS, "-Wall -Werror -Wextra $(DEBUG)");
   total += output(data->fd, "\n\n\n");
@@ -160,15 +166,30 @@ static ssize_t drawObjectVar(outFileData* data) {
 
 static ssize_t drawMakeRule(outFileData* data) {
   ssize_t t = 0;
+  const bool dep = isVarInConfig(Vdep, data->var);
+  const bool prog = isVarInConfig(Vprog, data->var);
+  const char* compiler = data->cpp ? "CXX" : "CC";
   t += output(data->fd, "#is cpp: %s\n\n", data->cpp ? "yes" : "no");
   t += output(data->fd, "all: ");
-  //! add dependece
+  if (dep) {
+    //! add dependece
+    t += output(data->fd, "dep ");
+  }
   t += output(data->fd, "$(NAME)\n\n");
-  const char* compiler = data->cpp ? "CXX" : "CC";
   t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
+  //! add lib buid here for .so or .a
   t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) $(CFLAGS) $(OBJS)", compiler, compiler);
   //!add more var if needed
+  if (prog) {
+    const char* progVar = readVariableName(data, reserveVarName[Vprog]);
+    t += output(data->fd, " %s ", progVar);
+  }
   t +=  output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
+  if (dep) {
+    //* make dep rule
+    const char* depValue = readVariableName(data, reserveVarName[Vdep]);
+    t += output(data->fd, "dep:\n\t%s\n\n", depValue);
+  }
   return t;
 }
 
@@ -184,7 +205,7 @@ static ssize_t drawEnd(outFileData* data) {
 ssize_t buildMakefile(outFileData* data) {
   ssize_t totalBytes = 0;
   // rework later
-  const char* hardcodePname = strrchr(data->scb->originPath, '/') + 1;
+  const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;
   totalBytes += header(data->fd, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "Makefile");

@@ -292,7 +292,7 @@ static bool makeDefaultConfigFile(outFileData* data) {
     return false;
   }
   //! add safety later
-  const char* name = strrchr(data->scb->path, '/') + 1;
+  const char* name = strrchr(data->scb->path, FILE_SEP) + 1;
   output(fd, "NAME:%s\n", name);
   output(fd, "NAMEX:\n\n");
   output(fd, "MAXDEPH:5\n\n");
@@ -432,6 +432,12 @@ static int checkVar(outFileData* data) {
       fprintf(stderr, "%s:%zu\n",data->configFile.name, i + 1);
       return 1;
     }
+    if (data->var.varVAlue[Vprog] + \
+      data->var.varVAlue[Vlib] + \
+      data->var.varVAlue[Vpublib] > 1) {
+        fprintf(stderr, MULT_COMPILE_RULE);
+        return 1;
+    }
   }
   return 0;
 }
@@ -440,18 +446,6 @@ static bool isVar(const char* line, const char* varName, size_t l) {
   return (strncmp(line, varName, l) == 0 && line[l] == ':');
 }
 
-
-static ssize_t addTo(char* to, const char* add, size_t curentLen, bool addSpace) {
-  if (MAX_VAR_NAME_LEN - (curentLen + addSpace) <= 0) {
-    fprintf(stderr, "scb: var is too long\n");
-    return 0;
-  }
-  ssize_t added = 0;
-  const char* space  = addSpace ? " " : "";
-  added = snprintf(to + curentLen, MAX_VAR_NAME_LEN - (curentLen + addSpace), "%s%s", space, add);
-  added -= removeEndl(to + curentLen);
-  return added;
-}
 
 ssize_t addToc(char* to, char c, size_t curentLen) {
   if (MAX_VAR_NAME_LEN - curentLen <= 0) {
@@ -534,6 +528,7 @@ int checkIfFileValid(outFileData* data) {
     const char* l = data->configFile.rawData[i];
     const int line = isLineValid(l);
     if (!valid(prev, line)) {
+      //! add better error message
       fprintf(stderr, "scb: invalid config file\n[%zu]%s\n", i + 1, l);
       return 1;
     }
@@ -565,7 +560,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     nlValid = false;
     while (l && l[j]) {
       if (l[j] == '%') {
-        j += getValue(data, total, i, l + j + 1);
+        j += getValue(data, total, i, l + j + 1) + 1;
       }
       else {
         addToc(data->configFile.buffer, l[j], *total);
@@ -600,23 +595,6 @@ char* readVariableName(outFileData* data, const char* name) {
   return data->configFile.buffer;
 }
 
-char* readVariable(outFileData* data, int var) {
-  if (var < 0 || var > (int)data->var.size)
-    return NULL;
-  bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
-  const char* find = reserveVarName[var];
-  const size_t varLen = strlen(find);
-  size_t i = 0;
-  ssize_t curentLen = 0;
-  while (data->configFile.rawData[i]) {
-    if (isVar(data->configFile.rawData[i], find, varLen)) {
-      break;
-    }
-    i++;
-  }
-  curentLen += addTo(data->configFile.buffer, data->configFile.rawData[i] + (varLen + 1), curentLen, false);
-  return data->configFile.buffer;
-}
 
 int isVarInConfig(int var, t_reserveVar varList) {
   return varList.varVAlue[var];
