@@ -10,7 +10,13 @@ just enough setting to be versatile and not too much to include problem.
 
 
 # how to use
-todo:
+if you just clone the projetc you have the use `compile.sh` for the setup and after that you can do `./scb .` and it gona build a make file for it self.
+```
+$ ./compile.sh
+$ ./scb .
+$ make
+```
+you could use it form the first compilation, but building it again show you exactly how it work.
 ```
 $scb {path} [build system (not added yet)]
 ```
@@ -23,16 +29,20 @@ simple rule for the config file, to declare value you use that syntax.
 ```
 name:value
   additional value
+  %variable
+  %_keyword
+# comment
 ```
 if you don't add `:` at the end it will throw an error, it needs that to find the end of the name and the beginning of the value.
 
 any text under the variable name will be consider as addionnal value only if there is at least,  
 one space, form-feed `\f`, carriage return `\r`, horizontal tab `\t`, or vertical tab `\v`.  
   
-otherwise it will be considered a new variable declaration. if any text is found "floating" with no other valid text above it it will throw an error.
+otherwise it will be considered a new variable declaration. if any text is found "floating" with no other valid text above it it will throw an error.  
+some [variable are reserve](#reserve-variable).
 
+## valide
 ```
-# valide
 foo:
 
 foo:bar
@@ -42,8 +52,9 @@ foo:
 
 foo:bar
   baz
-
-# invalide
+```
+## invalide
+```
 foo
 
   bar
@@ -79,19 +90,21 @@ baz:C
 ```
 the result it `foo A bar B baz CA`. like in bash if a variable is not resolved the value is empty
 
+## [keywords](#keyword)
 now to make the project more modular and have more option we have some keyword that help you make the project more. you can use the keywork `_LINUX` like so to only set a varible if the program is build on linux or the target computer is linux.
 
 ```
 foo:are we we building for linux? 
   %_LINUX yes
+  %_WINDOWS no
+  %_MACOS no
 ```
-we can also use the keywork `_ENV_` to set a variable pr read some information, and use `_SHELL` to see the result.
+we can also use the keywork `_ENV_` to set a variable pr read some information.
 
 ```
 name: %_ENV_USER
+# set variable to the user name
 
-
-%_SHELL echo %name
 ```
 
 
@@ -101,22 +114,24 @@ name: %_ENV_USER
 |**CC**       | cc                    |c compiler                          |
 |**CXX**      | c++                   |cpp compiler                        |
 |**NAME**     | {directory name}      |output file name                    |
-|**NAMEX**    |                       |add an extension to the program     |
+|**NAMEX**    |                       |add an extension to the output      |
 |**CFLAGS**   | -Wall -Werror -Wextra |c flags                             |
 |**CXXFLAGS** | -Wall -Werror -Wextra |cpp flags                           |
 |**ING**      |                       |ignore folder during build          |
 |**DEP**      |                       |add a rule that run before compiling|
 |**PROG**     |                       |set the build mode to executable    |
 |**LIB**      |                       |set the build mode to library       |
-|**SHELL**    | sh                    |the shell the system will use |
-# keyword
+|**SHELL**    | sh                    |the shell the system will use       |
 
+> if prog or lib is not in the config file, scb will make a program by default.
+
+# keyword
 |  name       | action                |
 |-------------| --------------------- |
 |**_LINUX**   |only read the rest of the line if the system is call on linux **or** targer is linux|
 |**_WINDOWS** |only read the rest of the line if the system is call on windows **or** targer is windows|
 |**_MACOS**   |only read the rest of the line if the system is call on macos **or** targer is macos|
-|**_ENV\_{}** |go read the environmant varible with the same name (**todo**)|
+|**_ENV\_{NAME}** |go read the environmant varible with the same name|
 |**_SHELL**   |run line as is.                                    (**todo**)|
 
 

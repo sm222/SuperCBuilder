@@ -456,6 +456,15 @@ static bool isVar(const char* line, const char* varName, size_t l) {
   return (strncmp(line, varName, l) == 0 && line[l] == ':');
 }
 
+ssize_t addTo(char* to, const char* line, size_t curentLen) {
+  const size_t len = strlen(line);
+  if (MAX_VAR_NAME_LEN - curentLen + len <= 0) {
+    fprintf(stderr, "scb: var is too long\n");
+    return 0;
+  }
+  memcpy(to + curentLen, line, len);
+  return len;
+}
 
 ssize_t addToc(char* to, char c, size_t curentLen) {
   if (MAX_VAR_NAME_LEN - curentLen <= 0) {
@@ -477,7 +486,7 @@ size_t skipWhiteSpace(const char* s, size_t start) {
 }
 
 
-static inline ssize_t findVarLen(const char*s) {
+static inline ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
   while (s[i] && !isspace(s[i])) { i++; }
   return i;
@@ -550,23 +559,24 @@ int checkIfFileValid(outFileData* data) {
   return 0;
 }
 
-static size_t getKeyWordLen(const char* keyword) {
+static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   size_t i = 0;
-  while (!isspace(keyword[i])) {
+  if (!data->scb->mainData->env)
+    return ;
+  const char* const* env = data->scb->mainData->env;
+  s += 4;
+  const size_t varLen = findVarLen(s);
+  fprintf(stderr, "ENV->%s\n", s);
+  while (env[i]) {
+    if (strncmp(env[i], s, varLen) == 0 && env[i][varLen] == '=') {
+      *total += addTo(data->configFile.buffer, env[i] + varLen + 1, *total);
+    }
     i++;
   }
-  return i;
 }
 
-static void readEnv(outFileData* data, const char* s, size_t* total) {
-  size_t i = 0;
-  while () {
-  
-  }
-}
-
-static int testKeyWord(outFileData* data, const char* s, size_t* dis, size_t* total) {
-  const size_t len = getKeyWordLen(s);
+static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
+  const size_t len = findVarLen(s);
   *dis += len;
   short i = 0;
   for ( ; keyWords[i]; i++) {
@@ -607,7 +617,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       }
       else if (l[j] == '%') {
         if (l[j + 1] == '_') {
-          if (testKeyWord(data, l + j + 2, &j))
+          if (testKeyWord(data, l + j + 2, &j, total))
             break ;
         }
         j += getValue(data, total, i, l + j + 1) + 1;
