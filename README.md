@@ -1,4 +1,4 @@
-# SuperCBulder
+# SuperCBuilder
 scb `super c builder` or `stupid c builder` is a program that use your files tree to make a makefile or other
 build system
 
