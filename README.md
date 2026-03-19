@@ -3,7 +3,7 @@ scb `super c builder` or `stupid c builder` is a program that use your files tre
 build system
 
 ## why use it
-you don't have too, it mostly a tool i made for myself.  
+you don't have too, it is mostly a tool i made for myself.  
 The idea behind it is to restore old projects and make them more accessible, keeping the build logic simple and stupid.  
 just enough setting to be versatile and not too much to include problem.
 
@@ -91,7 +91,8 @@ baz:C
 the result it `foo A bar B baz CA`. like in bash if a variable is not resolved the value is empty
 
 ## [keywords](#keyword)
-now to make the project more modular and have more option we have some keyword that help you make the project more. you can use the keywork `_LINUX` like so to only set a varible if the program is build on linux or the target computer is linux.
+now to make the project more modular and have more option we have some keyword that help.  
+you can use the keywork `_LINUX` like so to only set a varible if the program is build on linux or the target computer is linux.
 
 ```
 foo:are we we building for linux? 
@@ -99,7 +100,7 @@ foo:are we we building for linux?
   %_WINDOWS no
   %_MACOS no
 ```
-we can also use the keywork `_ENV_` to set a variable pr read some information.
+we can also use the keywork `_ENV_` to set a variable to the value of a variable of enviroment.
 
 ```
 name: %_ENV_USER
