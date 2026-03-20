@@ -1,12 +1,27 @@
-[x]fix c and cpp conflic 
-[ ]config file, add \n \%
-[ ]clean code,
-[ ]try to make bash file,
+
+param --
 [ ]add flags,
-[x]build icefactory
+[ ]add maxdept
+
+
+code base --
+[ ]clean code,
+[ ]better doc
+
+
+outfile -- 
+[ ]add bash
+[ ]add shell
 [ ]add sh output
 [ ]add cmake output
-[ ]better doc 
-[ ]add shell
+
+configfile --
+[ ]look for dup name in user var
 [ ]make better file promp choise
 [ ]add a better delult configfile
+[ ]define value for the default variable
+[ ]config file, add \n \%
+
+done
+[x]build icefactory
+[x]fix c and cpp conflic 

@@ -192,9 +192,28 @@ static ssize_t drawEnd(outFileData* data) {
 }
 
 
+//! need to test see if it works
+static void shellCallFt(void* data, ssize_t* total, const char* s) {
+  outFileData* structCast = data;
+  const char* const keyWord = "$(shell )";
+  const ssize_t len = strlen(s);
+  const ssize_t keyWordslen = strlen(keyWord);
+  if (MAX_VAR_NAME_LEN - *total + len + keyWordslen <= 0) {
+    fprintf(stderr, "scb: var is too long\n");
+    return ;
+  }
+  memcpy(structCast->configFile.buffer + *total, keyWord, keyWordslen - 1);
+  *total += keyWordslen -1;
+  memcpy(structCast->configFile.buffer + *total, s, len);
+  *total += len;
+  structCast->configFile.buffer[*total] = keyWord[keyWordslen -1];
+  (*total)++;
+}
+
 ssize_t buildMakefile(outFileData* data) {
   ssize_t totalBytes = 0;
   // rework later
+  data->shellFt = shellCallFt;
   const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;

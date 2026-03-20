@@ -102,6 +102,8 @@ typedef struct s_reserveVar {
   bool  varVAlue[sizeof(reserveVarName) / sizeof(char*)];
 } t_reserveVar;
 
+typedef void(*shellCall)(void*, ssize_t*, const char*);
+
 typedef struct {
   bool        cpp;
   int         fd;
@@ -114,6 +116,7 @@ typedef struct {
   //
   t_reserveVar  var;
   t_configValue configFile;
+  shellCall     shellFt;
 } outFileData;
 
 int  superStrcmp(const char* s1, const char* s2, size_t n);

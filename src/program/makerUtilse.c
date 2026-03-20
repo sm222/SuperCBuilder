@@ -296,11 +296,10 @@ static bool makeDefaultConfigFile(outFileData* data) {
   const char* name = strrchr(data->scb->path, FILE_SEP) + 1;
   output(fd, "NAME:%s\n", name);
   output(fd, "NAMEX:\n\n");
-  output(fd, "MAXDEPH:5\n\n");
-  output(fd, "# ignore folder, exp: var/\n");
+  output(fd, "# ignore folder, exp: 3part\n");
   output(fd, "ING:\n\n");
   output(fd, "# add var from config file\n");
-  output(fd, "CR:\n\n");
+  output(fd, "PROG:\n\n");
   output(fd, "# dependecy\n");
   output(fd, "DEP:\n\n");
   output(fd, "\n# all those variable are reserve\n");
@@ -456,13 +455,14 @@ static bool isVar(const char* line, const char* varName, size_t l) {
   return (strncmp(line, varName, l) == 0 && line[l] == ':');
 }
 
-ssize_t addTo(char* to, const char* line, size_t curentLen) {
+ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
   const size_t len = strlen(line);
-  if (MAX_VAR_NAME_LEN - curentLen + len <= 0) {
+  if (MAX_VAR_NAME_LEN - *curentLen + len <= 0) {
     fprintf(stderr, "scb: var is too long\n");
     return 0;
   }
-  memcpy(to + curentLen, line, len);
+  memcpy(to + *curentLen, line, len);
+  *curentLen += len;
   return len;
 }
 
@@ -566,10 +566,9 @@ static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   const char* const* env = data->scb->mainData->env;
   s += 4;
   const size_t varLen = findVarLen(s);
-  fprintf(stderr, "ENV->%s\n", s);
   while (env[i]) {
     if (strncmp(env[i], s, varLen) == 0 && env[i][varLen] == '=') {
-      *total += addTo(data->configFile.buffer, env[i] + varLen + 1, *total);
+      addTo(data->configFile.buffer, env[i] + varLen + 1, total);
     }
     i++;
   }
@@ -655,7 +654,7 @@ char* readVariableName(outFileData* data, const char* name) {
 }
 
 
-int isVarInConfig(int var, t_reserveVar varList) {
+inline int isVarInConfig(int var, t_reserveVar varList) {
   return varList.varVAlue[var];
 }
 
