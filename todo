@@ -24,4 +24,5 @@ configfile --
 
 done
 [x]build icefactory
-[x]fix c and cpp conflic 
+[x]fix c and cpp conflic
+[x]fix variable reading bug

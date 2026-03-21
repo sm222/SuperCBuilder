@@ -54,6 +54,35 @@ static const char* const reserveVarName[] = {
   0x0,
 };
 
+static const char* const reserveVarNameDefaultValue[] = {
+  "cc",
+  "c++",
+  "",
+  "",
+  "-Wall -Werror -Wextra",
+  "-Wall -Werror -Wextra",
+  "",
+  "",
+  "",
+  "",
+  "sh",
+  0x0,
+};
+
+typedef enum {
+  Vcc,
+  Vcxx,
+  Vname,
+  Vnamex,
+  VCFLAGS,
+  VCXXFLAGS,
+  Ving,
+  Vdep,
+  Vprog,
+  Vlib,
+  Vshell,
+} e_reserveVarName;
+
 static const char* const keyWords[] = {
   "LINUX ",
   "WINDOWS ",
@@ -62,6 +91,9 @@ static const char* const keyWords[] = {
   "SHELL ",
   0x0,
 };
+
+
+
 
 enum {
   k_linux   = 0,
@@ -83,19 +115,6 @@ typedef struct configValue {
   char buffer[MAX_VAR_NAME_LEN];
 } t_configValue;
 
-enum varReserveName {
-  Vcc,
-  Vcxx,
-  Vname,
-  Vnamex,
-  VCFLAGS,
-  VCXXFLAGS,
-  Ving,
-  Vdep,
-  Vprog,
-  Vlib,
-  Vshell,
-};
 
 typedef struct s_reserveVar {
   size_t size; //? set size too reserveVarName
@@ -141,7 +160,7 @@ void        printOutVar(t_outVar* head);
 
 int         isVarInConfig(int var, t_reserveVar varList);
 
-char*       readVariableName(outFileData* data, const char* name);
+char*       readVariableName(outFileData* data, e_reserveVarName name);
 
 int         removeEndl(char* value);
 

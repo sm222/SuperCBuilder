@@ -25,7 +25,7 @@ static ssize_t drawVarName(t_node* tmp, const char* from, const int* fd) {
 static ssize_t drawVar(outFileData* data, const int name, const char* defaultValue) {
   const char* val = defaultValue;
   if (isVarInConfig(name, data->var)) {
-    val =  readVariableName(data, reserveVarName[name]);
+    val =  readVariableName(data, name);
   }
   return output(data->fd, "%s\t\t=\t\t%s\n", reserveVarName[name], val);
 }
@@ -84,7 +84,7 @@ static ssize_t  buidFileAndFolder(outFileData* data, t_node** head, const char* 
   bzero(folderName, MAXPATHLEN);
   const char* ignore = NULL;
   if (isVarInConfig(Ving, data->var)) {
-    ignore = readVariableName(data, "ING");
+    ignore = readVariableName(data, Ving);
   }
   while (tmp) {
     // edit that to make var unique
@@ -171,14 +171,15 @@ static ssize_t drawMakeRule(outFileData* data) {
   t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) $(CFLAGS) $(OBJS)", compiler, compiler);
   //!add more var if needed
   if (prog) {
-    const char* progVar = readVariableName(data, reserveVarName[Vprog]);
+    const char* progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);
   }
   t +=  output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
   if (dep) {
     //* make dep rule
-    const char* depValue = readVariableName(data, reserveVarName[Vdep]);
-    t += output(data->fd, "dep:\n\t%s\n\n", depValue);
+    const char* depValue = readVariableName(data, Vdep);
+    if (depValue)
+      t += output(data->fd, "dep:\n\t%s\n\n", depValue);
   }
   return t;
 }

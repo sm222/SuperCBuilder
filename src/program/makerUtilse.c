@@ -593,6 +593,17 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   return 1;
 }
 
+//! add suport for default value
+/*
+static bool IsKnowVar(const char* name, const size_t varlen) {
+  size_t i = 0;
+  while (reserveVarName[i]) {
+    if (strncmp(name, reserveVarName[i], varlen) == 0)
+    return true;
+  }
+}
+*/
+
 static size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
   if (*total >= MAX_VAR_NAME_LEN)
     return 0;
@@ -604,12 +615,14 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     if (i > start) { return nameLen; }
     if (strncmp(l, name, nameLen) == 0 && l[nameLen] == ':') { break ; }
     i++;
+    if (!data->configFile.rawData[i]) { return nameLen; }
   }
   size_t j = nameLen + 1;
   bool nlValid = false;
   do {
+    const size_t lineLen = strlen(l);
     nlValid = false;
-    while (l && l[j]) {
+    while (j < lineLen) {
       if (l[j] == '\\' && l[j + 1] == '%') {
         addToc(data->configFile.buffer, '%', (*total)++);
         j += 2;
@@ -628,7 +641,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     }
     (*total) -= removeEndl(data->configFile.buffer);
     l = data->configFile.rawData[++i];
-    if (isLineValid(l) == l_varValue ) {
+    if (isLineValid(l) == l_varValue) {
       j = skipWhiteSpace(l, 0);
       nlValid = true;
     }
@@ -637,19 +650,24 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
 }
 
 
-char* readVariableName(outFileData* data, const char* name) {
-  if (!name)
-    return NULL;
+
+char* readVariableName(outFileData* data, e_reserveVarName name) {
   bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
-  ssize_t curentLen = 0;
   size_t i = 0;
+  ssize_t curentLen = 0;
+  const size_t len = strlen(reserveVarName[name]);
   while (data->configFile.rawData[i]) {
-    if (isVar(data->configFile.rawData[i], name, strlen(name))) {
-      getValue(data, &curentLen, i, name);
+    if (isVar(data->configFile.rawData[i], reserveVarName[name], len)) {
+      getValue(data, &curentLen, i, reserveVarName[name]);
       break;
     }
     i++;
   }
+  //else {
+  //  fprintf(stderr, "YES\n");
+  //  const size_t valueLen = strlen(reserveVarNameDefaultValue[name]);
+  //  memcpy(data->configFile.buffer, reserveVarNameDefaultValue[name], valueLen);
+  //}
   return data->configFile.buffer;
 }
 

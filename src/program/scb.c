@@ -21,7 +21,7 @@ static char* getFileTypeSimble(int n) {
 
 void printfolder(t_node* list, int tab, int mode) {
   const char* b = "|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  \
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
+ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |";
   char buff[10];
   buff[0] = 0;
   while (list) {
@@ -82,12 +82,9 @@ static int getFileType(const char* fileName) {
   return -1;
 }
 
-
 static bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
-
-
 
 int mapDir(const char* path, t_node** head, unsigned int maxDep) {
   if (isValidFolder(path) || maxDep == 0)

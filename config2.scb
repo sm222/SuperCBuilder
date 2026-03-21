@@ -1,0 +1,7 @@
+
+
+NAME:scb
+
+
+DEP:
+  echo %CC %CXX %CFLAGS %CXXFLAGS %SHELL
