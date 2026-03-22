@@ -12,7 +12,7 @@ static char* capName(const char* name) {
   return newName;
 }
 
-inline static short printnl(const int fd) {
+inline static short printNl(const int fd) {
   return write(fd, "\n", 1);
 }
 
@@ -60,7 +60,7 @@ ssize_t putAllFiles(outFileData* data, t_node* tmp, const char* from, const int 
       t += drawFile(tmp, from, fd);
     tmp = tmp->next;
   }
-  t += printnl(fd);
+  t += printNl(fd);
   return t;
 }
 
@@ -96,7 +96,7 @@ static ssize_t  buidFileAndFolder(outFileData* data, t_node** head, const char* 
       snprintf(folderName, MAXPATHLEN, "%zu_%s", tmp->data.id, capName(tmp->data.name));
       t += drawVarName(tmp, from ,fd);
       t += buidFileAndFolder(data, &tmp->child, folderName, fd);
-      t += printnl(*fd);
+      t += printNl(*fd);
     }
     else if (IS_FILE(tmp)) {
       t += putAllFiles(data, tmp, from, *fd);
@@ -162,6 +162,23 @@ static ssize_t drawObjectVar(outFileData* data) {
   return t;
 }
 
+static ssize_t drawDep(outFileData* data) {
+  const char* depValue = readVariableName(data, Vdep);
+  ssize_t t = 0;
+  t += output(data->fd, "dep:\n");
+  if (!depValue)
+    return t;
+  size_t start = 0;
+  size_t end = 0;
+  while (depValue[start]) {
+    extractVar(depValue, start, &end, ';');
+    t += output(data->fd, "\t%.*s\n", (int)end, depValue + start);
+    start += end + 1;
+  }
+  printNl(data->fd);
+  return t;
+}
+
 static ssize_t drawMakeRule(outFileData* data) {
   ssize_t t = 0;
   const bool dep = isVarInConfig(Vdep, data->var);
@@ -185,9 +202,7 @@ static ssize_t drawMakeRule(outFileData* data) {
   t +=  output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
   if (dep) {
     //* make dep rule
-    const char* depValue = readVariableName(data, Vdep);
-    if (depValue)
-      t += output(data->fd, "dep:\n\t%s\n\n", depValue);
+    t += drawDep(data);
   }
   return t;
 }

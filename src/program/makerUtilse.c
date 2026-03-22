@@ -489,7 +489,7 @@ size_t skipWhiteSpace(const char* s, size_t start) {
 
 static inline ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
-  while (s[i] && !isspace(s[i])) { i++; }
+  while (s[i] && !isspace(s[i]) && isalnum(s[i])) { i++; }
   return i;
 }
 

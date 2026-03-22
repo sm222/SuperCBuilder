@@ -7,6 +7,7 @@ param --
 code base --
 [ ]clean code,
 [ ]better doc
+[ ]add to doc variable the way the are read
 
 
 outfile -- 
@@ -26,3 +27,4 @@ done
 [x]fix c and cpp conflic
 [x]fix variable reading bug
 [x]define value for the default variable
+[x]fix a other bug for reading variable

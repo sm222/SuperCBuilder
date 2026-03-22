@@ -18,26 +18,28 @@ test:
 
 _SHELL echo a
 
-foo:A
+foo:A 
 
 bar:B
-  %baz
+  %baz 
 
 baz:C
- %foo
+ %foo 
 
 ING:
-  test
+  test 
 
 
 PROG:
-  %debug
-  %default
+  %debug 
+  %default 
 
 sys:
-  %_LINUX linux heh
+  %_LINUX linux heh 
   %_WINDOWS B
   %_MACOS C
 
 DEP:
-  echo foo %foo bar %bar baz %baz %sys
+  echo foo %foo;
+  echo bar %bar;
+  echo baz %baz;
