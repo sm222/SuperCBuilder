@@ -1,4 +1,6 @@
 #include "MakerUtilse.h"
+#include "makerMakeFile.h"
+#include "makerBash.h"
 
 const size_t bSize = 9999;
 
@@ -153,6 +155,10 @@ char* get_next_line(int fd) {
   return (safe_return(&book, &t_val));
 }
 
+inline short printNl(const int fd) {
+  return write(fd, "\n", 1);
+}
+
 size_t output(int fd, const char * s, ...) {
   char buffer[bSize + 1];
   va_list list;
@@ -186,15 +192,6 @@ size_t header(outFileData* data, const char* comment, const char* uName, const c
 
 #include <ctype.h>
 
-int superStrcmp(const char* s1, const char* s2, size_t n) {
-  if(!s1 || !s2 || n == 0)
-    return -1;
-  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && --n) {
-    s1++;
-    s2++;
-  }
-  return *s1 - *s2;
-}
 
 
 outFileData makerSetup(t_SCB* in, int mode) {
@@ -714,9 +711,14 @@ int makerStart(outFileData* data) {
   openConfigFile(data);
   error += checkIfFileValid(data);
   error += checkVar(data);
+  //! printVar(data); !add flag for showing it
   if (data->outputType == makefile && !error) {
-    printVar(data);
     outB = buildMakefile(data);
+  } else if (data->outputType == bash && !error) {
+    outB = buildBash(data);
+  }else {
+    fprintf(stderr, "scb: file type unknown\n" \
+    "type was [%d]\n", data->outputType);
   }
   closeConfigFile(data);
   printf("total byte prints > %zu\n", outB);

@@ -11,7 +11,6 @@ code base --
 
 
 outfile -- 
-[ ]add bash
 [ ]add shell
 [ ]add sh output
 [ ]add cmake output
@@ -22,7 +21,15 @@ configfile --
 [ ]add a better delult configfile
 [ ]config file, add \n \%
 
+
+work in progress --
+[x]add bash
+
+
+
 done
+[x]add build choise from lunch (./scb . bash/makefile)
+[x]fd was never close in makefile build
 [x]build icefactory
 [x]fix c and cpp conflic
 [x]fix variable reading bug

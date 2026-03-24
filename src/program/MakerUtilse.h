@@ -45,7 +45,7 @@ enum {
 static const char* const buildFileLanguage[] = {
   "Makefile:#",
   "bash:#",
-  "?",
+  "?:#",
   0x0,
 };
 
@@ -159,11 +159,10 @@ typedef struct {
   shellCall     shellFt;
 } outFileData;
 
-int  superStrcmp(const char* s1, const char* s2, size_t n);
-
 outFileData  makerSetup(t_SCB* in, int mode);
 int          makerStart(outFileData* data);
 
+short       printNl(const int fd);
 size_t      output(int fd, const char* s, ...);
 size_t      header(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
 

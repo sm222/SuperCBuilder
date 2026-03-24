@@ -18,13 +18,13 @@ test:
 
 
 
-foo:A 
+foo:A
 
 bar:B
-  %baz 
+  %baz
 
 baz:C
- %foo 
+ %foo
 
 ING:
   test 

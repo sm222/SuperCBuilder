@@ -121,6 +121,12 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
 
 # include "MakerUtilse.h"
 
+static int grabAv(t_SCB* setting, const int avSize) {
+  setting->buildType = av_read(&setting->mainData->avNoFlags, 1);
+  fprintf(stderr, "[%d]%s <>\n", avSize, setting->buildType);
+  return 0;
+}
+
 static int setup(t_SCB* setting, void* mainData) {
   bzero(setting, sizeof(*setting));
   setting->mainData = mainData;
@@ -136,10 +142,45 @@ static int setup(t_SCB* setting, void* mainData) {
     return 1;
   }
   if (avNb > 1) {
-    setting->buildType = av_read(&setting->mainData->avNoFlags, 1);
+    grabAv(setting, avNb);
   }
   getcwd(setting->path, PATH_MAX);
   return 0;
+}
+
+static size_t getLenOfBuild(const char* const name) {
+  size_t i = 0;
+  while (name[i]) {
+    if (name[i] == ':')
+      break ;
+    i++;
+  }
+  return i;
+}
+
+# include <ctype.h>
+
+int superStrcmp(const char* s1, const char* s2, size_t n) {
+  if(!s1 || !s2 || n == 0)
+    return -1;
+  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && --n) {
+    s1++;
+    s2++;
+  }
+  return *s1 - *s2;
+}
+
+static int getBuildType(t_SCB* scb) {
+  if (!scb->buildType)
+    return 0;
+  for (int i = 0; buildFileLanguage[i]; i++) {
+    const size_t len = getLenOfBuild(buildFileLanguage[i]);
+    if (superStrcmp(scb->buildType, buildFileLanguage[i], len) == 0 \
+    && scb->buildType[len] == '\0') {
+      return i;
+    }
+  }
+  return 111;
 }
 
 int scb(void* data) {
@@ -155,7 +196,7 @@ int scb(void* data) {
     deledEmty(&SCB.node);
     //! add flag for visual
     printfolder(SCB.node, 0, 0);
-    outFileData data = makerSetup(&SCB, 0);
+    outFileData data = makerSetup(&SCB, getBuildType(&SCB));
     SCB.error = makerStart(&data);
   }
   freeNode(&SCB.node);

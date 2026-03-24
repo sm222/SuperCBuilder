@@ -18,7 +18,7 @@ $ make
 ```
 you could use it form the first compilation, but building it again show you exactly how it work.
 ```
-$scb {path} [build system (not added yet)]
+$scb {path} [build system]
 ```
 
 # variable declaration

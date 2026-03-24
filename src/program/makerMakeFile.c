@@ -12,10 +12,6 @@ static char* capName(const char* name) {
   return newName;
 }
 
-inline static short printNl(const int fd) {
-  return write(fd, "\n", 1);
-}
-
 static int getNumberTab(const char* s) {
   int l = 11 - strlen(s);
   return l / 2;
@@ -249,7 +245,9 @@ ssize_t buildMakefile(outFileData* data) {
   totalBytes += drawObjectVar(data);
   totalBytes += drawMakeRule(data);
   totalBytes += drawEnd(data);
+  close(data->fd);
   freeOutVar(&data->outVar);
+  printf("outfile -> %s/Makefile\n", data->scb->originPath);
   return totalBytes;
 }
 
