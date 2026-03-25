@@ -17,7 +17,6 @@ test:
 # if no default and no case is catch var woud be empty
 
 
-
 foo:A
 
 bar:B
@@ -27,7 +26,6 @@ baz:C
  %foo
 
 ING:
-  test 
 
 
 PROG:

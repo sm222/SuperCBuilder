@@ -146,7 +146,6 @@ name: %_ENV_USER
 |**cmake** |       |
 |**ninja** |       |
 |**meson** |       |
-|**tup**   |       |
 |**______**|   |
 |**sh**    |       |
 |**pyton** |       |

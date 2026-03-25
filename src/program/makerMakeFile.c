@@ -69,7 +69,6 @@ static bool testIsIgnore(const char* name, const char* list) {
   while (list[start]) {
     extractVar(list, start, &end, ';');
     if (strncmp(list + start, name, end) == 0) {
-      fprintf(stderr, "skip > %s\n", name);
       return true;
     }
     start += end + TOKENSIZE;
@@ -171,7 +170,7 @@ static ssize_t drawDep(outFileData* data) {
     t += output(data->fd, "\t%.*s\n", (int)end, depValue + start);
     start += end + TOKENSIZE;
   }
-  printNl(data->fd);
+  t += printNl(data->fd);
   return t;
 }
 
@@ -179,11 +178,10 @@ static ssize_t drawMakeRule(outFileData* data) {
   ssize_t t = 0;
   const bool dep = isVarInConfig(Vdep, data->var);
   const bool prog = isVarInConfig(Vprog, data->var);
-  const char* compiler = data->cpp ? "CXX" : "CC";
+  const char* const compiler = data->cpp ? "CXX" : "CC";
   t += output(data->fd, "#is cpp: %s\n\n", data->cpp ? "yes" : "no");
   t += output(data->fd, "all: ");
   if (dep) {
-    //! add dependece
     t += output(data->fd, "dep ");
   }
   t += output(data->fd, "$(NAME)\n\n");
@@ -192,10 +190,10 @@ static ssize_t drawMakeRule(outFileData* data) {
   t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) $(CFLAGS) $(OBJS)", compiler, compiler);
   //!add more var if needed
   if (prog) {
-    const char* progVar = readVariableName(data, Vprog);
+    const char* const progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);
   }
-  t +=  output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
+  t += output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
   if (dep) {
     //* make dep rule
     t += drawDep(data);

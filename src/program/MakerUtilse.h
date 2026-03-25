@@ -65,10 +65,12 @@ static const char* const reserveVarName[] = {
   "DEP",
   "PROG",
   "LIB",
+  "DLIB",
   "SHELL",
   0x0,
 };
 
+//ar rcs
 
 /*
 ! no tokens can ever be put in those string
@@ -86,6 +88,7 @@ static const char* const reserveVarNameDefaultValue[] = {
   "",                     //dep
   "",                     //prog
   "",                     //lib
+  "",                     //dlib
   "sh",                   //shell
   0x0,
 };
@@ -101,6 +104,7 @@ typedef enum {
   Vdep,
   Vprog,
   Vlib,
+  Vdlib,
   Vshell,
 } e_reserveVarName;
 
