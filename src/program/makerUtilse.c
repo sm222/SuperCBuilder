@@ -460,7 +460,7 @@ ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
     fprintf(stderr, "scb: var is too long\n");
     return 0;
   }
-  memcpy(to + *curentLen, line, len);
+  memcpy(to + *curentLen, line, len + 1);
   *curentLen += len;
   return len;
 }
@@ -570,6 +570,7 @@ static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   while (env[i]) {
     if (strncmp(env[i], s, varLen) == 0 && env[i][varLen] == '=') {
       addTo(data->configFile.buffer, env[i] + varLen + TOKENSIZE, total);
+      break ;
     }
     i++;
   }
@@ -589,11 +590,12 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   }
   if (i == k_env) {
     readEnv(data, s, total);
+    *dis += strlen("_SHELL");
     return 0;
   }
   if (i == k_shell) {
-    //data->shellFt(data, total, start, s);
-    fprintf(stderr, "shell!!\n");
+    data->shellFt(data, total);
+    return 0;
   }
   return 1;
 }
@@ -655,6 +657,10 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       }
     }
     (*total) -= removeEndl(data->configFile.buffer);
+    if (data->shellEnd[0]) {
+      addTo(data->configFile.buffer, data->shellEnd, total);
+      data->shellEnd[0] = 0;
+    }
     l = data->configFile.rawData[++i];
     if (isLineValid(l) == L_varValue) {
       j = skipWhiteSpace(l, 0);

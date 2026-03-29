@@ -17,9 +17,6 @@ test:
 # if no default and no case is catch var woud be empty
 
 
-blah:
-  %_SHELL echo %_ENV_USER
-
 foo:A
 
 bar:B

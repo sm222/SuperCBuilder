@@ -209,9 +209,9 @@ static ssize_t drawMakeRule(outFileData* data) {
     t += drawProg(data, compiler, prog);
   }
   if (lib) {
+    //! add lib buid here for .so or .a
     t += drawlib(data, "ar rcs");
   }
-  //! add lib buid here for .so or .a
   //!add more var if needed
   if (dep) {
     //* make dep rule
@@ -230,23 +230,22 @@ static ssize_t drawEnd(outFileData* data) {
 
 
 //! need to test see if it works
-//static ssize_t shellCallFt(void* data, ssize_t* total, const char* s) {
-//  outFileData* structCast = data;
-//  const char* const keyWord = "$(shell )";
-//  const char* const line = s + SHELL_KEYWORD;
-//  ssize_t i = 0;
-//  structCast->shellEnd[0] = '1';
-//  while (s[i]) {
-//    i++;
-//  }
-//  (void)
-//  //* > getValue;
-//}
+static void shellCallFt(void* data, ssize_t* total) {
+  outFileData* structCast = data;
+  const char* const keyWord = "$(shell )";
+  memcpy(structCast->shellEnd, ")", 2);
+  ssize_t i = 0;
+  while (keyWord[i] != ')') {
+    addToc(structCast->configFile.buffer, keyWord[i], *total);
+    (*total)++;
+    i++;
+  }
+}
 
 ssize_t buildMakefile(outFileData* data) {
   ssize_t totalBytes = 0;
   // rework later
-  //data->shellFt = shellCallFt;
+  data->shellFt = shellCallFt;
   const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;

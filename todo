@@ -12,7 +12,6 @@ code base --
 
 outfile -- 
 [ ]add shell
-[ ]add sh output
 [ ]add cmake output
 
 configfile --
@@ -23,11 +22,13 @@ configfile --
 
 
 work in progress --
-[x]add bash
 
 
 
 done
+[x]add sh output
+[x]add shell
+[x]add bash
 [x]add build choise from lunch (./scb . bash/makefile)
 [x]fd was never close in makefile build
 [x]build icefactory

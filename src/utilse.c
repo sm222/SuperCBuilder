@@ -21,16 +21,6 @@ size_t getArrayLen(const char* const* array) {
 }
 
 
-int  int_strlen(const char* s) {
-  int i = 0;
-  if (!s)
-    return -1;
-  while (s[i])
-    i++;
-  return i;
-}
-
-
 void put_str(const char* str, int fd, bool nl) {
   write(fd, str, strlen(str));
   if (nl)

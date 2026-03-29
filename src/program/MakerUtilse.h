@@ -148,7 +148,7 @@ typedef struct configValue {
   int      fd;
   char*    name;
   char**   rawData;
-  char buffer[MAX_VAR_NAME_LEN];
+  char     buffer[MAX_VAR_NAME_LEN];
 } t_configValue;
 
 
@@ -157,7 +157,7 @@ typedef struct s_reserveVar {
   bool  varVAlue[sizeof(reserveVarName) / sizeof(char*)];
 } t_reserveVar;
 
-typedef void(*shellCall)(void*, ssize_t*, ssize_t ,const char*);
+typedef void(*shellCall)(void*, ssize_t*);
 
 typedef struct {
   bool        cpp;
@@ -191,6 +191,7 @@ void        extractVar(const char* l, size_t start, size_t *end, char const sep)
 t_outVar*   makeOutVarLast(const char* name, t_outVar** list);
 void        freeOutVar(t_outVar** list);
 void        printOutVar(t_outVar* head);
+ssize_t     addToc(char* to, char c, size_t curentLen);
 
 
 char*       readVariableName(outFileData* data, e_reserveVarName name);
