@@ -12,6 +12,7 @@
 # define ENDL(c)    ((c == '\n') || (c == '\0'))
 
 # define TOKENSIZE 1
+# define TOKENS_LIST "\\%;"
 
 # define NO_CONFIG_FILE \
 "no config file found, do you want to generate one?"
@@ -116,11 +117,11 @@ typedef enum {
 } e_reservedVarNames;
 
 static const char* const keyWords[] = {
-  "LINUX ",
-  "WINDOWS ",
-  "MACOS ",
+  "LINUX",
+  "WINDOWS",
+  "MACOS",
   "ENV_",
-  "SHELL ",
+  "SHELL",
   0x0,
 };
 

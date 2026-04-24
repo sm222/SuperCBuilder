@@ -508,10 +508,23 @@ size_t skipWhiteSpace(const char* s, size_t start) {
   return i;
 }
 
+static inline int isTokens(int c) {
+  unsigned short i = 0;
+  while (TOKENS_LIST[i]) {
+    if (TOKENS_LIST[i] == c)
+      return c;
+    i++;
+  }
+  return 0;
+}
 
 static inline ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
-  while (s[i] && !isspace(s[i]) && isalnum(s[i])) { i++; }
+  while (s[i] && \
+  !isspace(s[i]) && \
+  isalnum(s[i]) && \
+  !isTokens(s[i]))
+  { i++; }
   return i;
 }
 
@@ -604,8 +617,7 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   *dis += len;
   short i = 0;
   for ( ; keyWords[i]; i++) {
-    const size_t lenKeyword = strlen(keyWords[i]);
-    if (strncmp(s, keyWords[i], lenKeyword) == 0) { break ; }
+    if (strncmp(s, keyWords[i], len) == 0) { break ; }
   }
   // test system target
   if (i <= NUMBER_OF_OS - 1) {
@@ -617,6 +629,8 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     return 0;
   }
   if (i == k_shell) {
+    if (!data->shellFt)
+      return 1;
     data->shellFt(data, total);
     return 0;
   }
@@ -645,13 +659,15 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total) {
   char toAdd = ' ';
   switch (t) {
     case '\\':
-    case ';':
     case '%':
-      toAdd = t;
-      break;
+    toAdd = t;
+    break;
     case 'n':
-      toAdd = '\n';
-      break ;
+    toAdd = '\n';
+    break ;
+    case ' ':
+      return 0;
+    break;
     default:
       fprintf(stderr, "warning: unknown token ascii[%d]\\%c replace by space\n", t, t);
   }
@@ -680,16 +696,16 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     const size_t lineLen = strlen(line);
     nlValid = false;
     while (j < lineLen) {
-      if (line[j] == '\\') {
-        tokensInterpretor(line[j + 1], data, total);
-        j += 2;
-      }
-      else if (line[j] == '%') {
+      if (line[j] == '%') {
         if (line[j + 1] == '_') {
           if (testKeyWord(data, line + j + (TOKENSIZE * 2), &j, total))
             break ;
         }
         j += getValue(data, total, i, line + j + TOKENSIZE) + TOKENSIZE;
+      }
+      if (line[j] == '\\') {
+        tokensInterpretor(line[j + 1], data, total);
+        j += 2;
       }
       else {
         addToc(data->configFile.buffer, line[j], (*total)++);

@@ -9,10 +9,10 @@ default:
 
 
 test:
-  %LINUX   -D VAR=A
-  %WINDOWS -D VAR=B
-  %MAC     -D VAR=C
-  %DEFAULT -D VAR=D
+  %_LINUX   -D VAR=A
+  %_WINDOWS -D VAR=B
+  %_MAC     -D VAR=C
+  %_DEFAULT -D VAR=D
 
 # if no default and no case is catch var woud be empty
 
@@ -24,6 +24,7 @@ bar:B
 
 baz:C
   %foo\wd
+  %test
 
 ING:
 
