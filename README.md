@@ -10,7 +10,7 @@ It has enough settings to be versatile but tries to avoid overengeneering, Minim
 
 # how to use
 If you just clone the project you can run `compile.sh` for initial setup. after that you can do `./scb .`  
-and it gona build a make file for it self.
+and it gona build a makefile for it self.
 ```
 $ ./compile.sh
 $ ./scb .
@@ -183,11 +183,11 @@ scb only take the comment in consideration if the `#` is the first character on 
 
 |  name      | type         | support |
 | ---------- | ------------ | ------- |
-| **make**   | build system |  **X**  |
+| **make**   | build system | **90%** |
 | **cmake**  | build system |         |
 | **ninja**  | build system |         |
 | **meson**  | build system |         |
-| **sh**     | scripting    |  **\|** |
+| **sh**     | scripting    | **30%** |
 | **pyton**  | scripting    |         |
 | **zig**    | scripting    |         |
 

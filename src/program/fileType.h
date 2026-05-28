@@ -28,6 +28,7 @@ static const char* const fileType[] = {
 static const char* const DefaultIgnoreFolder[] = {
   "/.git",
   "/.vscode",
+  "/.env",
   0x0,
 };
 

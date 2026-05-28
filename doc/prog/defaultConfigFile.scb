@@ -1,0 +1,32 @@
+
+
+NAME:
+  %_LINUX\ a
+  %_MACOS\ a
+  %_WINDOWS\ app
+
+NAMEX:
+  %_LINUX\ .out
+  %_MACOS\ .out
+  %_WINDOWS\ .exe
+
+
+
+#IGN:
+#ING
+#PROG
+#LIB
+
+# CC:
+# CXX:
+# NAME:
+# NAMEX:
+# CFLAGS:
+# CXXFLAGS:
+# ING:
+# DEP:
+# PROG:
+# LIB:
+# DLIB:
+# SHELL:
+#

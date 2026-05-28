@@ -184,7 +184,7 @@ typedef struct {
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);
-int          makerStart(outFileData* data);
+int          makerStart(outFileData* data, const char* file);
 
 short       printNl(const int fd);
 size_t      output(int fd, const char* s, ...);

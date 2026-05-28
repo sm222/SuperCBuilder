@@ -53,7 +53,7 @@
 #  define WHT    CS "\e[37m" CE
 #  define ORG    CS "\e[38;5;202m" CE
 #  define PIK    CS "\e[38;5;176m" CE
-#  define RESET  CS "\e[0m\022" CE
+#  define RESET  CS "\e[0m" CE
 #  define CLE    CS "\e[1;1H\x1b[2J" CE
 #  define MAX_COLORLEN 20
 # endif

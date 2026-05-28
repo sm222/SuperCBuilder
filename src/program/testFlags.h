@@ -2,16 +2,18 @@
 # define __TESTFLAGS__
 
 enum {
-  flags_color  = 1,
-  flags_detach = 64,
-  flags_2 = 8,
-  flags_3 = 16,
-  flags_4 = 32,
-  flags_5 = 64,
+  flags_color    = 4,
+  flags_detach   = 8,
+  flags_set_type = 16,
+  flags_4        = 32,
+  flags_5        = 64,
+  flags_6        = 128,
+  flags_7        = 256,
+  flags_8        = 512,
 };
 
 
 int   testSingle(void* data);
-
+int   testDouble(void *data);
 
 #endif

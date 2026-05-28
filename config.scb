@@ -2,7 +2,13 @@ NAME:scb
 
 CC:gcc
 
+
+
 debug:-g
+
+
+CFLAGS:
+  -O2 
 
 default:
   -D=HELLO
@@ -28,6 +34,7 @@ baz:C
   !%_ROOT!
 
 ING:
+  doc;
 
 
 PROG:

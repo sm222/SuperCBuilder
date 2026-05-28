@@ -201,7 +201,7 @@ size_t header(outFileData* data, const char* comment, const char* uName, const c
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
   out += output(data->fd, "%s built by %s\n", comment, maker);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
-  out += output(data->fd, "%s config file -> %s\n", comment, data->configFile.name);
+  out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
   out += output(data->fd, "%s - %s - %s\n", comment, comment, comment);
   out += output(data->fd, "\n\n");
   return out;
@@ -677,7 +677,7 @@ static bool IsKnowVar(outFileData* data, ssize_t* total, const size_t varlen, co
   return false;
 }
 
-static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total) {
+static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size_t i) {
   char toAdd = ' ';
   switch (t) {
     case '\\':
@@ -691,7 +691,7 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total) {
       return 0;
     break ;
     default:
-      fprintf(stderr, "warning: unknown token ascii[%d]\\%c replace by space\n", t, t);
+      fprintf(stderr, "warning: line %zu unknown token ascii[%d]\\%c replace by space\n", ++i , t, t);
   }
   addToc(data->configFile.buffer, toAdd, (*total)++);
   return 1;
@@ -726,7 +726,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
         j += getValue(data, total, i, line + j + TOKENSIZE) + TOKENSIZE;
       }
       if (line[j] == '\\') {
-        tokensInterpretor(line[j + 1], data, total);
+        tokensInterpretor(line[j + 1], data, total, i);
         j += 2;
       }
       else {
@@ -777,25 +777,30 @@ inline int isVarInConfig(int var, t_reserveVar varList) {
   return varList.varValue[var];
 }
 
-int makerStart(outFileData* data) {
+int makerStart(outFileData* data, const char* file) {
   ssize_t outB = 0;
   int error = 0;
-  const int configFile = printConfigFiles(data->scb->node);
-  if (!configFile) {
-    const char* r =  \
-    dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 1);
-    if (makeChoiseNoConfigFile(r[0], data)) {
-      fprintf(stderr, "scb: stop\n");
-      return 1;
-    }
-  } else if (configFile == 1) {
-    printf("config file found\n");
-    data->configFile.name = getConfigName(data, 1);
+  if (file) {
+    data->configFile.name = (char*)file;
   }
   else {
-    const char* r = dialogBox(WITCH_FILE, "[number]", 2);
-    const int n = atoi(r);
-    data->configFile.name = getConfigName(data, n);
+    const int configFile = printConfigFiles(data->scb->node);
+    if (!configFile) {
+      const char* r =  \
+      dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 1);
+      if (makeChoiseNoConfigFile(r[0], data)) {
+        fprintf(stderr, "scb: stop\n");
+        return 1;
+      }
+    } else if (configFile == 1) {
+      printf("config file found\n");
+      data->configFile.name = getConfigName(data, 1);
+    }
+    else {
+      const char* r = dialogBox(WITCH_FILE, "[number]", 2);
+      const int n = atoi(r);
+      data->configFile.name = getConfigName(data, n);
+    }
   }
   openConfigFile(data);
   error += checkIfFileValid(data);

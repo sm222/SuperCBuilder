@@ -16,8 +16,6 @@ configfile --
 [ ]look for dup name in user var
 [ ]make better file promp choise
 [ ]add a better delult configfile
-[ ]add keyWord $_ROOT that use argv 0 
-   > to make a relatif path for other build and dependcy
 
 
 work in progress --
@@ -25,6 +23,17 @@ work in progress --
 
 
 done --
+[-] Thu 28 May 2026
+[]
+[x]maxDep is now at 60 by default
+[x]better render of folders and files
+[x]now file use for scb can be give in argv
+[x]better warning for tokensInterpretor
+[x]add configfile to header
+[x]makefile add better rebuild
+[x]add .env to default ignore
+[x]add keyWord $_ROOT that use argv 0 
+   > to make a relatif path for other build and dependcy
 [-] Sat 16 May 2026
 [x]detach flags
 [x]config file, add \n \%

@@ -211,8 +211,15 @@ static ssize_t drawMakeRule(outFileData* data) {
 
 static ssize_t drawEnd(outFileData* data) {
   ssize_t t = 0;
+  const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
   t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n\n");
-  t += output(data->fd, "fclean: clean\n\t@rm -fv $(NAME)\n\n");
+  t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);
+  t += output(data->fd, "rebuild:\n\t");
+  for (int x = 0; x < data->scb->mainData->ac; x++) {
+    char* space = x != data->scb->mainData->ac - 1 ? " " : "";
+    t += output(data->fd, "%s%s", data->scb->mainData->av[x], space);
+  }
+  t += output(data->fd, "\n\n");
   t += output(data->fd, "re: fclean all\n\nPHONY:\n#END");
   return t;
 }
@@ -248,7 +255,7 @@ ssize_t buildMakefile(outFileData* data) {
   totalBytes += drawEnd(data);
   close(data->fd);
   freeOutVar(&data->outVar);
-  printf("outfile -> %s/Makefile\n", data->scb->originPath);
+  output(STDOUT_FILENO, "outfile -> %s/Makefile\n", data->scb->originPath);
   return totalBytes;
 }
 

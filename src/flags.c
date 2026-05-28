@@ -15,6 +15,9 @@ static t_flagValue* fv_add(int flag, const char* value) {
       free(f);
       f = NULL;
     }
+  } else {
+    perror("calloc");
+    f = NULL;
   }
   return f;
 }
