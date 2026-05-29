@@ -311,7 +311,7 @@ static const char* const defaultFile[] = {
   "#",
   "#",
   "",
-  "#IGN:",
+  "#ING:",
   "",
   "#CC:",
   "#CXX:",
@@ -361,7 +361,7 @@ static int makeChoiseNoConfigFile(char response, outFileData* data) {
   return 1;
 }
 
-char* findCommentFromType(int type) {
+const char* findCommentFromType(int type) {
   if (type >= 0) {
     return strchr(buildFileLanguage[type], ':') + 1;
   }
@@ -778,7 +778,6 @@ inline int isVarInConfig(int var, t_reserveVar varList) {
 }
 
 int makerStart(outFileData* data, const char* file) {
-  ssize_t outB = 0;
   int error = 0;
   if (file) {
     data->configFile.name = (char*)file;
@@ -803,6 +802,12 @@ int makerStart(outFileData* data, const char* file) {
     }
   }
   openConfigFile(data);
+  return error;
+}
+
+int runOutFile(outFileData* data) {
+  ssize_t outB = 0;
+  int error = 0;
   error += checkIfFileValid(data);
   error += checkVar(data);
   //! printVar(data); !add flag for showing it
@@ -820,5 +825,3 @@ int makerStart(outFileData* data, const char* file) {
   printf("total byte prints > %zu\n", outB);
   return error;
 }
-
-

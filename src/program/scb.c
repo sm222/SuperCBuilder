@@ -3,7 +3,7 @@
 
 static int addLine(char* buff, int tab, const size_t max, bool colorMode) {
   int total = 0;
-  int color = 91;
+  int color = 31;
   static bool l = false;
   while (tab) {
     if (colorMode) {
@@ -13,8 +13,8 @@ static int addLine(char* buff, int tab, const size_t max, bool colorMode) {
       total += snprintf(buff + total, max - total, "%c  |", l ? '\\' : '/');
     }
     color++;
-    if (color == 97)
-      color = 91;
+    if (color == 37)
+      color = 31;
     tab--;
   }
   l = !l;
@@ -96,6 +96,10 @@ static bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
 
+//static char* ignoreList = NULL;
+
+//extractVar
+
 int mapDir(const char* path, t_node** head, unsigned int maxDep) {
   if (isValidFolder(path) || maxDep == 0)
     return 1; // only care if error happen of first try
@@ -113,9 +117,11 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
       snprintf(wd, PATH_MAX, "%s/%s", path, de->d_name);
       stat(wd, &stats);
       const int type = S_ISDIR(stats.st_mode) ? folder : getFileType(de->d_name);
-      if (testDotsFiles(de->d_name) || (type == unknown && type != folder) || isValidFolder(wd)) {
+      if (testDotsFiles(de->d_name) || \
+      (type == unknown && type != folder) || isValidFolder(wd)) {
         continue ;
-      } else {
+      }
+      else {
         t_node* t = makeNodeLast(de->d_name, type, head);
         if (type == folder) {
           mapDir(wd, &t->child, --maxDep);
@@ -131,7 +137,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
 
 # include "MakerUtils.h"
 
-static int grabAv(t_SCB* setting, int avSize, const char* path) {
+static int grabAv(t_SCB* setting, int avSize) {
   if (avSize > 1) {
     const char* fileName = av_read(&setting->mainData->avNoFlags, 1);
     if (access(fileName, F_OK | R_OK) != 0) {
@@ -160,7 +166,7 @@ static int setup(t_SCB* setting, void* mainData) {
     fprintf(stderr, "scb: invalid path: %s\n",path);
     return 1;
   }
-  int err = grabAv(setting, avNb, path);
+  int err = grabAv(setting, avNb);
   getcwd(setting->path, PATH_MAX);
   return err;
 }
@@ -213,12 +219,13 @@ int scb(void* data) {
   SCB.error = mapDir(SCB.path, &SCB.node, maxDep);
   chdir(SCB.originPath);
   if (!SCB.error) {
+    outFileData Outdata = makerSetup(&SCB, getBuildType(&SCB));
+    //! add flag for visual
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);
-    //! add flag for visual
     printfolder(SCB.node, read_byte(SCB.mainData->flags, flags_color));
-    outFileData data = makerSetup(&SCB, getBuildType(&SCB));
-    SCB.error = makerStart(&data, av_read(&SCB.mainData->avNoFlags, 1));
+    SCB.error += makerStart(&Outdata, av_read(&SCB.mainData->avNoFlags, 1));
+    SCB.error += runOutFile(&Outdata);
   }
   freeNode(&SCB.node);
   return SCB.error;

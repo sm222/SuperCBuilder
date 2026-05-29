@@ -168,6 +168,7 @@ typedef struct s_reserveVar {
 typedef void(*shellCall)(void*, ssize_t*);
 
 typedef struct {
+  bool        isOpen;
   bool        cpp;
   int         fd;
   t_SCB*      scb;
@@ -185,13 +186,14 @@ typedef struct {
 
 outFileData  makerSetup(t_SCB* in, int mode);
 int          makerStart(outFileData* data, const char* file);
+int          runOutFile(outFileData* data);
 
 short       printNl(const int fd);
 size_t      output(int fd, const char* s, ...);
 size_t      header(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
 bool        testIsIgnore(const char* name, const char* list);
 
-char*       findCommentFromType(int type);
+const char* findCommentFromType(int type);
 
 
 void        extractVar(const char* l, size_t start, size_t *end, char const sep);
