@@ -11,8 +11,8 @@ size_t getArrayLen(const char* const* array);
 
 char* d__strdup(const char* s);
 //
-void put_str(const char* str, int fd, bool nl);
-void put_str_nl(const char* str, int fd);
+size_t put_str(const char* str, int fd, bool nl);
+size_t put_str_nl(const char* str, int fd);
 //
 void set_byte(int32_t* flag, int32_t pos, bool status);
 bool read_byte(int32_t flag, int32_t value);

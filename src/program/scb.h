@@ -20,7 +20,7 @@ typedef struct {
   int32_t       flags;
   int           error;
   t_node*       node;
-  char*         buildType;
+  const char*   buildType;
 } t_SCB;
 
 #endif

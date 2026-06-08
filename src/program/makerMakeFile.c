@@ -245,7 +245,8 @@ ssize_t buildMakefile(outFileData* data) {
   const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;
-  totalBytes += header(data, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "Makefile");
+  const char* const user = getenv("USER");
+  totalBytes += header(data, findCommentFromType(data->outputType), user, hardcodePname, "Makefile");
   totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data);
   //

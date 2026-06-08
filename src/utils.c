@@ -21,15 +21,16 @@ size_t getArrayLen(const char* const* array) {
 }
 
 
-void put_str(const char* str, int fd, bool nl) {
-  write(fd, str, strlen(str));
+size_t put_str(const char* str, int fd, bool nl) {
+  size_t total = write(fd, str, strlen(str));
   if (nl)
-    write(fd, "\n", 1);
+    total += write(fd, "\n", 1);
+  return total;
 }
 
 
-void put_str_nl(const char* str, int fd) {
-  put_str(str, fd, true);
+size_t put_str_nl(const char* str, int fd) {
+  return put_str(str, fd, true);
 }
 
 

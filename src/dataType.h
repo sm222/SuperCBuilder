@@ -22,6 +22,13 @@
 # define SYS_MAC     2 // Mac is use
 # define SYS_UNKNOW  3 // add more later
 
+static const char* const SYS_NAMES[] = {
+  "LINUX",
+  "WINDOWS",
+  "MACOS",
+  0x0
+};
+
 # if (unix || __unix || __unix__ || __linux__)
 #  define SYSTYPE SYS_LINUX
 #  define FILE_SEP '/'

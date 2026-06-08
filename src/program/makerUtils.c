@@ -1,8 +1,19 @@
 #include "MakerUtils.h"
 #include "makerMakeFile.h"
 #include "makerBash.h"
-
+#include "testFlags.h"
+#include <ctype.h>
 const size_t bSize = 9999;
+
+int superStrcmp(const char* s1, const char* s2, size_t n) {
+  if(!s1 || !s2 || n == 0)
+    return -1;
+  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && --n) {
+    s1++;
+    s2++;
+  }
+  return tolower(*s1) - tolower(*s2);
+}
 
 //*
 //*
@@ -73,7 +84,7 @@ void printOutVar(t_outVar* head) {
 # define NL '\n'
 # define B_SIZE 101
 
-#  define BUFFER_SIZE 100
+# define BUFFER_SIZE 200
 
 typedef struct s_info {
   char*  tmp;
@@ -182,7 +193,7 @@ size_t output(int fd, const char * s, ...) {
   va_start(list, s);
   const int len = vsnprintf(buffer, bSize, s, list);
   if (len > 0)
-    write(fd, buffer, len);
+    put_str(buffer, fd, false);
   va_end(list);
   return len;
 }
@@ -209,7 +220,14 @@ size_t header(outFileData* data, const char* comment, const char* uName, const c
 
 #include <ctype.h>
 
-
+static int getTarget(t_SCB* scb) {
+  const char* const os = fv_get_value(scb->mainData->flagValue, flags_target);
+  for (int i = 0; SYS_NAMES[i]; i++) {
+    if (superStrcmp(SYS_NAMES[i], os, strlen(SYS_NAMES[i]) + 1) == 0)
+      return i;
+  }
+  return unknown;
+}
 
 outFileData makerSetup(t_SCB* in, int mode) {
   outFileData data;
@@ -218,7 +236,11 @@ outFileData makerSetup(t_SCB* in, int mode) {
   data.scb = in;
   data.outputType = mode;
   data.workingDirectory = in->path;
-  data.target = SYSTYPE;
+  if (read_byte(in->mainData->flags, flags_target)) {
+    data.target = getTarget(in);
+  }
+  else
+    data.target = SYSTYPE;
   return data;
 }
 
@@ -342,7 +364,7 @@ static bool makeDefaultConfigFile(outFileData* data) {
   for (size_t i = 0; defaultFile[i]; i++) {
     output(fd, "%s\n", defaultFile[i]);
   }
-  for (int i = 0; reservedVarNames[i]; i++) {
+  for (size_t i = 0; reservedVarNames[i]; i++) {
     output(fd, "# %s:\n", reservedVarNames[i]);
   }
   output(fd, "#\n");
@@ -369,7 +391,7 @@ const char* findCommentFromType(int type) {
 }
 
 static int readConfigFile(t_configValue* file) {
-  size_t alloc = 20;
+  size_t alloc = 40;
   size_t index = 0;
   char* l = "";
   file->rawData = calloc(alloc, sizeof(char*));
@@ -386,7 +408,7 @@ static int readConfigFile(t_configValue* file) {
 }
 
 
-static int openConfigFile(outFileData* data) {
+int openConfigFile(outFileData* data) {
   if (!data->configFile.name) {
     return 1;
   }
@@ -395,13 +417,12 @@ static int openConfigFile(outFileData* data) {
   const char* pathAv = av_read(&data->scb->mainData->avNoFlags, 0);
   snprintf(path, size,"%s/%s", pathAv, data->configFile.name);
   data->configFile.fd = open(path, O_RDONLY);
-  fprintf(stderr, "path -> %s\n", path);
   if (data->configFile.fd == 0) {
     perror("scb");
     return 1;
   }
-  readConfigFile(&data->configFile);
-  return 0;
+  fprintf(stderr, "path -> %s\n", path);
+  return readConfigFile(&data->configFile);
 }
 
 static int closeConfigFile(outFileData* data) {
@@ -470,7 +491,7 @@ static int isVarName(char* str, const char* const* var) {
   return -1;
 }
 
-static int checkVar(outFileData* data) {
+int checkVar(outFileData* data) {
   if (!data->configFile.fd)
     return 0;
   for (size_t i = 0; data->configFile.rawData[i]; i++) {
@@ -679,6 +700,8 @@ static bool IsKnowVar(outFileData* data, ssize_t* total, const size_t varlen, co
 
 static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size_t i) {
   char toAdd = ' ';
+  const bool colorMode = read_byte(data->scb->mainData->flags, flags_color);
+  const char* const warning = colorMode ? YEL "warning" WHT : "warning";
   switch (t) {
     case '\\':
     case '%':
@@ -691,7 +714,7 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
       return 0;
     break ;
     default:
-      fprintf(stderr, "warning: line %zu unknown token ascii[%d]\\%c replace by space\n", ++i , t, t);
+      fprintf(stderr, "%s: line %zu unknown token ascii[%d]\\%c replace by space\n", warning, ++i , t, t);
   }
   addToc(data->configFile.buffer, toAdd, (*total)++);
   return 1;
@@ -778,6 +801,8 @@ inline int isVarInConfig(int var, t_reserveVar varList) {
 }
 
 int makerStart(outFileData* data, const char* file) {
+  if (data->isOpen)
+    return 0;
   int error = 0;
   if (file) {
     data->configFile.name = (char*)file;
@@ -808,18 +833,18 @@ int makerStart(outFileData* data, const char* file) {
 int runOutFile(outFileData* data) {
   ssize_t outB = 0;
   int error = 0;
-  error += checkIfFileValid(data);
-  error += checkVar(data);
+  // look if preopen
+  if (!data->isOpen) {
+    error += checkIfFileValid(data);
+    error += checkVar(data);
+  }
   //! printVar(data); !add flag for showing it
   if (data->outputType == makefile && !error) {
     outB = buildMakefile(data);
   } else if (data->outputType == sh && !error) {
     outB = buildBash(data);
   } else {
-    const char* msg = "";
-    if (error) {  msg = ERROR_FILE; }
-    else { msg = UNKNOWN_TYPE; }
-    fprintf(stderr, msg, data->outputType);
+    fprintf(stderr, ERROR_FILE, error);
   }
   closeConfigFile(data);
   printf("total byte prints > %zu\n", outB);

@@ -1,33 +1,26 @@
 NAME:scb
-
 CC:gcc
 
-
-
-debug:-g
-
+#debug:-g
 
 CFLAGS:
-  -O2 
+  -Wall -Werror -Wextra 
+  %debug 
+  -O3
 
 default:
   -D=HELLO
 
-
 test:
-  %_LINUX   -D VAR=A
-  %_WINDOWS -D VAR=B
-  %_MAC     -D VAR=C
-  %_DEFAULT -D VAR=D
+  %_LINUX   -D OS=LINUX
+  %_WINDOWS -D OS=WINDOWS
+  %_MAC     -D OS=MACOS
+  %_DEFAULT -D OS=D
 
 # if no default and no case is catch var woud be empty
-
-
 foo:A
-
 bar:B
   %baz
-
 baz:C
   %foo\wd
   %test
@@ -35,8 +28,6 @@ baz:C
 
 ING:
   doc;
-
-
 PROG:
   %debug 
   %default 

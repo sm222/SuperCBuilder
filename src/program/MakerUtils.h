@@ -27,7 +27,7 @@
 "scb: multiple compile rules defined, there can only be one\n"
 
 # define UNKNOWN_TYPE \
-"scb: file type unknown\ntype was [%d]\n"
+"scb: %s file type unknown\n"
 
 # define ERROR_FILE \
 "error while parsing\ncode was [%d]\n"
@@ -88,16 +88,16 @@ static const char* const reservedVarNames[] = {
 static const char* const reserveVarNameDefaultValue[] = {
   "cc",                   // cc
   "c++",                  // cxx
-  "",                     //name
-  "",                     //namex
-  "-Wall -Werror -Wextra",//ccflags
-  "-Wall -Werror -Wextra",//cxxflags
-  "",                     //ing
-  "",                     //dep
-  "",                     //prog
-  "",                     //lib
-  "",                     //dlib
-  "sh",                   //shell
+  "",                     // name
+  "",                     // namex
+  "-Wall -Werror -Wextra",// ccflags
+  "-Wall -Werror -Wextra",// cxxflags
+  "",                     // ing
+  "",                     // dep
+  "",                     // prog
+  "",                     // lib
+  "",                     // dlib
+  "sh",                   // shell
   0x0,
 };
 
@@ -188,6 +188,12 @@ outFileData  makerSetup(t_SCB* in, int mode);
 int          makerStart(outFileData* data, const char* file);
 int          runOutFile(outFileData* data);
 
+int         checkIfFileValid(outFileData* data);
+int         checkVar(outFileData* data);
+
+
+int         superStrcmp(const char* s1, const char* s2, size_t n);
+
 short       printNl(const int fd);
 size_t      output(int fd, const char* s, ...);
 size_t      header(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
@@ -207,6 +213,7 @@ ssize_t     addToc(char* to, char c, size_t curentLen);
 char*       readVariableName(outFileData* data, e_reservedVarNames name);
 
 bool        newFile(char* name, outFileData* data);
+int         openConfigFile(outFileData* data);
 void        closeFile(outFileData* data);
 //
 int         isVarInConfig(int var, t_reserveVar varList);

@@ -4,15 +4,16 @@
 #include "testFlags.h"
 
 const char* const helpList[] = {
-  "--color  -c           color",                       // 1
-  "--detach -d           detach path from root",       // 2
-  "--buildtype=[type]    set the build type to value", // 4
+  "--color  -c           color",                       // 4
+  "--detach -d           detach path from root",       // 8
+  "--buildtype=[type]    set the build type to value", // 16
+  "--target=[system]     linux, windows, mac, etc",    // 32
   0x0
 };
 
 static void printHelp(void) {
   for (size_t i = 0; helpList[i]; i++) {
-    fprintf(stdout, "%s \n", helpList[i]);
+    put_str(helpList[i], STDOUT_FILENO, true);
   }
 }
 
@@ -63,10 +64,14 @@ int   testDouble(void* data) {
   if (strncmp("detach", value, strlen("detach") + 1) == 0) {
     set_byte(&castData->flags, flags_detach, true);
   }
-  else if (strncmp("buildtype=", value, strlen("buildtype=")) == 0) {
+  else if (strncmp("buildtype=", value, 10) == 0) {
     set_byte(&castData->flags, flags_set_type, true);
     error = fv_add_last(&castData->flagValue, flags_set_type, value + 10);
     error = error < 0 ? error * -1 : error;
+  }
+  else if (strncmp("target=", value, 7) == 0) {
+    set_byte(&castData->flags, flags_target, true);
+    fv_add_last(&castData->flagValue, flags_target, value + 7);
   } else {
     error = 1;
     fprintf(stderr, "scb: unknow flag %s\n", castData->av[castData->current]);

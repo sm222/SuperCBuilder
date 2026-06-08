@@ -1,5 +1,6 @@
 #include "scb.h"
-
+#include "testFlags.h"
+#include "MakerUtils.h"
 
 static int addLine(char* buff, int tab, const size_t max, bool colorMode) {
   int total = 0;
@@ -37,9 +38,9 @@ void _printfolder(t_node* list, int tab, bool colorMode) {
       len = snprintf(buff, buffLen, "%s ", list->data.name);
       currentSize += len;
     }
-    write(STDOUT_FILENO, buff, len);
+    put_str(buff, STDOUT_FILENO, false);
     if (list->data.type == folder || !list->next || currentSize >= size) {
-      write(STDOUT_FILENO, "\n", 1);
+      printNl(STDOUT_FILENO);
       currentSize = 0;
     }
     if (list && list->child)
@@ -52,7 +53,7 @@ void _printfolder(t_node* list, int tab, bool colorMode) {
 
 void printfolder(t_node* list, bool colorMode) {
   _printfolder(list, 0, colorMode);
-  write(STDOUT_FILENO, "\n", 1);
+  printNl(STDOUT_FILENO);
 }
 
 static int testFolderList(const char* folder) {
@@ -71,7 +72,7 @@ static int isValidFolder(const char* path) {
   if (path) {
     const char* dirTruck = strrchr(path, FILE_SEP);
     if (dirTruck && testFolderList(dirTruck)) {
-      fprintf(stdout, "%s is ignore\n", dirTruck + 1);
+      fprintf(stdout, "%s was in ignore\n", dirTruck + 1);
       return 1;
     }
   }
@@ -96,7 +97,7 @@ static bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
 
-//static char* ignoreList = NULL;
+static const char* ignore = NULL;
 
 //extractVar
 
@@ -119,6 +120,10 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
       const int type = S_ISDIR(stats.st_mode) ? folder : getFileType(de->d_name);
       if (testDotsFiles(de->d_name) || \
       (type == unknown && type != folder) || isValidFolder(wd)) {
+        continue ;
+      }
+      else if (testIsIgnore(de->d_name, ignore)) {
+        fprintf(stdout, "%s was in ignore\n", de->d_name);
         continue ;
       }
       else {
@@ -151,7 +156,10 @@ static int grabAv(t_SCB* setting, int avSize) {
 static int setup(t_SCB* setting, void* mainData) {
   bzero(setting, sizeof(*setting));
   setting->mainData = mainData;
-  getcwd(setting->originPath, PATH_MAX);
+  if (getcwd(setting->originPath, PATH_MAX) != setting->originPath) {
+    perror("getcwd");
+    return 1;
+  }
   const size_t avNb = av_len(&setting->mainData->avNoFlags);
   if (!avNb) {
     fprintf(stderr, "scb: no path given\n");
@@ -167,7 +175,10 @@ static int setup(t_SCB* setting, void* mainData) {
     return 1;
   }
   int err = grabAv(setting, avNb);
-  getcwd(setting->path, PATH_MAX);
+  if (getcwd(setting->path, PATH_MAX) != setting->path) {
+    perror("getcwd");
+    return 1;
+  }
   return err;
 }
 
@@ -181,19 +192,11 @@ static size_t getLenOfBuild(const char* const name) {
   return i;
 }
 
-# include <ctype.h>
-
-int superStrcmp(const char* s1, const char* s2, size_t n) {
-  if(!s1 || !s2 || n == 0)
-    return -1;
-  while (*s1 && *s2 && tolower(*s1) == tolower(*s2) && --n) {
-    s1++;
-    s2++;
-  }
-  return *s1 - *s2;
-}
 
 static int getBuildType(t_SCB* scb) {
+  if (read_byte(scb->mainData->flags, flags_set_type)) {
+    scb->buildType = fv_get_value(scb->mainData->flagValue, flags_set_type);
+  }
   if (!scb->buildType)
     return 0;
   for (int i = 0; buildFileLanguage[i]; i++) {
@@ -203,23 +206,56 @@ static int getBuildType(t_SCB* scb) {
       return i;
     }
   }
-  return 111;
+  return notype;
 }
 
 
 #include "testFlags.h"
+
+static int preOpenFile(outFileData* data, const char* fileName, int* maxDep) {
+  int error = 0;
+  data->configFile.name = (char*)fileName;
+  if (openConfigFile(data))
+    return 1;
+  data->isOpen = true;
+  error += checkIfFileValid(data);
+  error += checkVar(data);
+  if (error)
+    return error;
+  if (isVarInConfig(Ving, data->var)) {
+    ignore = readVariableName(data, Ving);
+  }
+  //todo
+  (void)maxDep;
+  return 0;
+}
 
 int scb(void* data) {
   t_SCB  SCB;
   if (setup(&SCB, data)) {
     return 1;
   }
-  //
   int maxDep = 60;
-  SCB.error = mapDir(SCB.path, &SCB.node, maxDep);
-  chdir(SCB.originPath);
+  int buildTypde = getBuildType(&SCB);
+  outFileData Outdata = makerSetup(&SCB, buildTypde);
+  if (Outdata.target == unknown) {
+    const char* const os = fv_get_value(SCB.mainData->flagValue, flags_target);
+    fprintf(stderr, "scb: unknown target -> %s\n", os);
+    SCB.error += 1;
+  }
+  //
+  if (!SCB.error && av_len(&SCB.mainData->avNoFlags) == 2) {
+    SCB.error += preOpenFile(&Outdata, av_read(&SCB.mainData->avNoFlags, 1), &maxDep);
+  }
+  if (buildTypde == notype) {
+    fprintf(stderr, UNKNOWN_TYPE, SCB.buildType);
+    SCB.error += 1;
+  }
   if (!SCB.error) {
-    outFileData Outdata = makerSetup(&SCB, getBuildType(&SCB));
+    SCB.error += mapDir(SCB.path, &SCB.node, maxDep);
+    SCB.error += chdir(SCB.originPath);
+  }
+  if (!SCB.error) {
     //! add flag for visual
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);

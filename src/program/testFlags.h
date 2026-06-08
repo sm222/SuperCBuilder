@@ -5,7 +5,7 @@ enum {
   flags_color    = 4,
   flags_detach   = 8,
   flags_set_type = 16,
-  flags_4        = 32,
+  flags_target   = 32,
   flags_5        = 64,
   flags_6        = 128,
   flags_7        = 256,

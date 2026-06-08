@@ -86,6 +86,7 @@ static int base(t_mainData data, int fdIn, int fdOut) {
     status = programSettings.programFt(&programSettings);
   }
   av_free(&programSettings.avNoFlags);
+  fv_free(&programSettings.flagValue);
   return status;
 }
 
