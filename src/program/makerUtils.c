@@ -412,16 +412,13 @@ int openConfigFile(outFileData* data) {
   if (!data->configFile.name) {
     return 1;
   }
-  const size_t size = (MAXPATHLEN * 2) + 2;
-  char  path[size];
-  const char* pathAv = av_read(&data->scb->mainData->avNoFlags, 0);
-  snprintf(path, size,"%s/%s", pathAv, data->configFile.name);
-  data->configFile.fd = open(path, O_RDONLY);
-  if (data->configFile.fd == 0) {
-    perror("scb");
+  const char* const root = av_read(&data->scb->mainData->avNoFlags, 0);
+  data->configFile.fd = open(data->configFile.name, O_RDONLY);
+  if (data->configFile.fd <= 0) {
+    perror(data->configFile.name);
     return 1;
   }
-  fprintf(stderr, "path -> %s\n", path);
+  fprintf(stderr, "path -> %s/%s\n", root, data->configFile.name);
   return readConfigFile(&data->configFile);
 }
 
@@ -616,8 +613,11 @@ static int isLineValid(const char* s) {
 
 
 int checkIfFileValid(outFileData* data) {
-  if (!data->configFile.fd)
+  if (data->configFile.fd <= 0) {
+    //todo remove
+    fprintf(stderr, "no configfile\n");
     return 0;
+  }
   size_t i = 0;
   int prev = L_empty;
   while (data->configFile.rawData[i]) {

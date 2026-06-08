@@ -122,7 +122,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
       (type == unknown && type != folder) || isValidFolder(wd)) {
         continue ;
       }
-      else if (testIsIgnore(de->d_name, ignore)) {
+      else if (ignore && testIsIgnore(de->d_name, ignore)) {
         fprintf(stdout, "%s was in ignore\n", de->d_name);
         continue ;
       }
@@ -146,7 +146,7 @@ static int grabAv(t_SCB* setting, int avSize) {
   if (avSize > 1) {
     const char* fileName = av_read(&setting->mainData->avNoFlags, 1);
     if (access(fileName, F_OK | R_OK) != 0) {
-      fprintf(stderr, "scb: test %s %s\n", fileName, strerror(errno));
+      fprintf(stderr, "scb: %s %s\n", fileName, strerror(errno));
       return 1;
     }
   }
@@ -220,8 +220,9 @@ static int preOpenFile(outFileData* data, const char* fileName, int* maxDep) {
   data->isOpen = true;
   error += checkIfFileValid(data);
   error += checkVar(data);
-  if (error)
+  if (error) {
     return error;
+  }
   if (isVarInConfig(Ving, data->var)) {
     ignore = readVariableName(data, Ving);
   }
