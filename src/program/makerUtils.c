@@ -1,8 +1,10 @@
 #include "MakerUtils.h"
 #include "makerMakeFile.h"
 #include "makerBash.h"
+#include "makerCmake.h"
 #include "testFlags.h"
 #include <ctype.h>
+
 const size_t bSize = 9999;
 
 int superStrcmp(const char* s1, const char* s2, size_t n) {
@@ -201,19 +203,21 @@ size_t output(int fd, const char * s, ...) {
 
 #include <time.h>
 
-size_t header(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
+# define CSBHEADERLINE " - - - - - - - - - - - - "
+
+size_t scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
   time_t rawtime;
   struct tm* timeinfo;
   time(&rawtime);
   const char* maker = uName ? uName : "unknown";
   timeinfo = localtime(&rawtime);
   size_t out = 0;
-  out += output(data->fd, "%s - %s - %s\n", comment, comment, comment);
+  out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
   out += output(data->fd, "%s built by %s\n", comment, maker);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
   out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
-  out += output(data->fd, "%s - %s - %s\n", comment, comment, comment);
+  out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "\n\n");
   return out;
 }
@@ -324,30 +328,8 @@ bool newFile(char *name, outFileData *data) {
 }
 
 static const char* const defaultFile[] = {
+  "#start",
   "NAMEX:",
-  "#",
-  "",
-  "#",
-  "#",
-  "#",
-  "#",
-  "#",
-  "",
-  "#ING:",
-  "",
-  "#CC:",
-  "#CXX:",
-  "",
-  "#CFLAGS",
-  "#CXXFLAGS",
-  "",
-  "#ING",
-  "#DEP",
-  "",
-  "#PROG",
-  "#LIB",
-  "",
-  "#SHELL",
   "",
   0x0
 };
@@ -365,7 +347,7 @@ static bool makeDefaultConfigFile(outFileData* data) {
     output(fd, "%s\n", defaultFile[i]);
   }
   for (size_t i = 0; reservedVarNames[i]; i++) {
-    output(fd, "# %s:\n", reservedVarNames[i]);
+    output(fd, "#  %s:\n", reservedVarNames[i]);
   }
   output(fd, "#\n");
   close(fd);
@@ -468,6 +450,7 @@ void extractVar(const char* l, size_t start, size_t *end, char const sep) {
   size_t i = 0;
   while (l[start + i]) {
     if (l[start + i] == sep) {
+      // need to see if i can fix bug with \sep
       break ;
     }
     i++;
@@ -705,6 +688,7 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
   switch (t) {
     case '\\':
     case '%':
+    case ';':
       toAdd = t;
       break ;
     case 'n':
@@ -839,13 +823,13 @@ int runOutFile(outFileData* data) {
     error += checkVar(data);
   }
   //! printVar(data); !add flag for showing it
-  if (data->outputType == makefile && !error) {
-    outB = buildMakefile(data);
-  } else if (data->outputType == sh && !error) {
-    outB = buildBash(data);
-  } else {
+  if (error) {
     fprintf(stderr, ERROR_FILE, error);
+    return error;
   }
+  if (data->outputType == makefile)   { outB = buildMakefile(data); }
+  else if (data->outputType == sh)    { outB = buildBash(data); }
+  else if (data->outputType == cmake) { outB = buildCmake(data); }
   closeConfigFile(data);
   printf("total byte prints > %zu\n", outB);
   return error;

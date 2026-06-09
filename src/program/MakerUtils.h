@@ -53,6 +53,7 @@ enum {
 static const char* const buildFileLanguage[] = {
   "Makefile:#",
   "sh:#",
+  "cmake:#",
   "?:#",
   0x0,
 };
@@ -75,6 +76,7 @@ static const char* const reservedVarNames[] = {
   "LIB",
   "DLIB",
   "SHELL",
+  "CLEAN",
   0x0,
 };
 
@@ -98,6 +100,7 @@ static const char* const reserveVarNameDefaultValue[] = {
   "",                     // lib
   "",                     // dlib
   "sh",                   // shell
+  "",                     // clean
   0x0,
 };
 
@@ -114,6 +117,7 @@ typedef enum {
   Vlib,
   Vdlib,
   Vshell,
+  Vclean,
 } e_reservedVarNames;
 
 //3 os, start at 0 in keyWords
@@ -196,7 +200,7 @@ int         superStrcmp(const char* s1, const char* s2, size_t n);
 
 short       printNl(const int fd);
 size_t      output(int fd, const char* s, ...);
-size_t      header(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
+size_t      scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
 bool        testIsIgnore(const char* name, const char* list);
 
 const char* findCommentFromType(int type);

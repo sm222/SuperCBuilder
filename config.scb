@@ -42,3 +42,6 @@ DEP:
   echo bar %bar;
   echo baz %baz;
   %blah;
+
+CLEAN:
+  echo done;

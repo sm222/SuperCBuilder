@@ -148,7 +148,7 @@ ssize_t buildBash(outFileData* data) {
   const char* const hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   const char* const sh = readVariableName(data, Vshell);
   totalBytes += output(data->fd, "#!/bin/env %s\n\n", sh);
-  totalBytes += header(data, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "sh");
+  totalBytes += scbHeader(data, findCommentFromType(data->outputType), getenv("USER"), hardcodePname, "sh");
   //
   totalBytes += drawNameAndStartVar(data);
   totalBytes += drawDep(data);

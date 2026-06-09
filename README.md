@@ -163,6 +163,7 @@ scb only take the comment in consideration if the `#` is the first character on 
 |**PROG**     |                       |add the value to the compilation    |
 |**LIB**      |                       |set the build mode to library       |
 |**SHELL**    | sh                    |the shell the system will use       |
+|**CLEAN**    |                       |add shell cmd to cleaning rule      |
 
 > if prog or lib is not in the config file, scb will make a program by default.
 

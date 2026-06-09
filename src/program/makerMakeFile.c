@@ -155,7 +155,7 @@ static ssize_t drawDep(outFileData* data) {
   size_t end = 0;
   while (depValue[start]) {
     extractVar(depValue, start, &end, ';');
-    t += output(data->fd, "\t%.*s\n", (int)end, depValue + start);
+    t += output(data->fd, "\t@%.*s\n", (int)end, depValue + start);
     start += end + TOKENSIZE;
   }
   t += printNl(data->fd);
@@ -209,10 +209,26 @@ static ssize_t drawMakeRule(outFileData* data) {
   return t;
 }
 
+static ssize_t drawClean(outFileData* data) {
+  ssize_t t = 0;
+  size_t start = 0;
+  size_t end = 0;
+  const char* const clear = readVariableName(data, Vclean);
+  while (clear[start]) {
+    extractVar(clear, start, &end, ';');
+    t += output(data->fd, "\t@%.*s\n", (int)end, clear + start);
+    start += end + TOKENSIZE;
+  }
+  t += printNl(data->fd);
+  return t;
+}
+
 static ssize_t drawEnd(outFileData* data) {
   ssize_t t = 0;
   const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
-  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n\n");
+  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n");
+  if (isVarInConfig(Vclean, data->var))
+    t += drawClean(data);
   t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);
   t += output(data->fd, "rebuild:\n\t");
   for (int x = 0; x < data->scb->mainData->ac; x++) {
@@ -246,7 +262,7 @@ ssize_t buildMakefile(outFileData* data) {
   if (!newFile("Makefile", data))
     return -1;
   const char* const user = getenv("USER");
-  totalBytes += header(data, findCommentFromType(data->outputType), user, hardcodePname, "Makefile");
+  totalBytes += scbHeader(data, findCommentFromType(data->outputType), user, hardcodePname, "Makefile");
   totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data);
   //
