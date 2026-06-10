@@ -6,7 +6,6 @@ CC:gcc
 CFLAGS:
   -Wall -Werror -Wextra 
   %debug 
-  -O3
 
 default:
   -D=HELLO
@@ -24,10 +23,10 @@ bar:B
 baz:C
   %foo\wd
   %test
-  !%_ROOT!
+  %_ROOT
 
 ING:
-  doc;
+  doc!
 PROG:
   %debug 
   %default 
@@ -38,10 +37,10 @@ sys:
   %_MACOS C
 
 DEP:
-  echo foo %foo;
-  echo bar %bar;
-  echo baz %baz;
-  %blah;
+  echo foo %foo!
+  echo bar %bar!
+  echo baz %baz!
+  %blah!
 
 CLEAN:
   echo done;

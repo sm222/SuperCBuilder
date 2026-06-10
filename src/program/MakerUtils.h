@@ -50,6 +50,8 @@ enum {
   notype   = -1,
 };
 
+# define EXTRACTVAR_TOC '!'
+
 static const char* const buildFileLanguage[] = {
   "Makefile:#",
   "sh:#",
@@ -217,7 +219,7 @@ ssize_t     addToc(char* to, char c, size_t curentLen);
 char*       readVariableName(outFileData* data, e_reservedVarNames name);
 
 bool        newFile(char* name, outFileData* data);
-int         openConfigFile(outFileData* data);
+int         openConfigFile(outFileData* data, bool preopen);
 void        closeFile(outFileData* data);
 //
 int         isVarInConfig(int var, t_reserveVar varList);

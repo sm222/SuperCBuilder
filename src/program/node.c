@@ -12,6 +12,7 @@ static t_node* makeNode(char* name, int type) {
     return NULL;
   static size_t id = 0;
   node->data.name = strdup(name);
+  node->data.nameLen = strlen(name);
   node->data.type = type;
   node->data.id = ++id;
   return node;

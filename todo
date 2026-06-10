@@ -1,28 +1,38 @@
 
 param --
-[ ]add maxdept
 
 code base --
-[ ]clean code,
 [ ]better doc
 [ ]add to doc variable the way the are read
 
-
 outfile -- 
 [ ]add shell
-[ ]add cmake output
 
 configfile --
 [ ]look for dup name in user var
 [ ]make better file promp choise
-[ ]add a better delult configfile
-
 
 work in progress --
+[-]clean code,
+[-]add cmake output
+[-]add maxdept
 
 
 
 done --
+[-] Wed 10 Jun 2026
+[x]folder printing is now more clean
+[x]makefile add regen as a rule, so it can call back scb to add missing files
+[x]add flag --target to build for other platform
+[x]for CLEAN and DEP add '@' in front of line
+[x]add CLEAN var, like DEP it add line to the clean rule
+[x]fix bug and behaviour of program while opening a config file
+[x]fix bug to open config file from other path (normaly)
+   > see if other case brake it
+[x]add info flag -i --info
+[x]fix error message at multiple place
+[x]switch ; for ! for separator in configfile
+[x]add a better delult configfile
 [-] Thu 28 May 2026
 []
 [x]maxDep is now at 60 by default

@@ -62,7 +62,7 @@ static int set_single_value(t_settings* settings, int c) {
     barr(settings, v);
   }
   else {
-    put_str_error(settings, RED, "%c: is unknow flag, call -h or --help to see the option\n", c);
+    put_str_error(settings, RED, "scb %c: is unknow flag, call -h or --help to see the option", c);
     return 1;
   }
   return 0;

@@ -22,20 +22,33 @@ static int addLine(char* buff, int tab, const size_t max, bool colorMode) {
   return total;
 }
 
+static size_t longestName(t_node* list) {
+  size_t longest = 0;
+  while (list) {
+    const size_t l = list->data.nameLen;
+    if (IS_FILE(list) && l > longest)
+      longest = l;
+    list = list->next;
+  }
+  return longest;
+}
+
 void _printfolder(t_node* list, int tab, bool colorMode) {
   const int size = 80;
   const size_t buffLen = size * 4;
   int currentSize = 0;
   char buff[buffLen];
   int len = 0;
+  const size_t longName = longestName(list);
   while (list) {
+    const int NameSize = (int)(longName) - list->data.nameLen;
     if (currentSize == 0 || list->data.type == folder ) {
       len = addLine(buff, tab, buffLen, colorMode);
-      len += snprintf(buff + len, buffLen - len, "%s ", list->data.name);
+      len += snprintf(buff + len, buffLen - len, "%s%*.s ", list->data.name, NameSize, "");
       currentSize += len;
     }
     else {
-      len = snprintf(buff, buffLen, "%s ", list->data.name);
+      len = snprintf(buff, buffLen, "%s%*.s " ,list->data.name, NameSize, "");
       currentSize += len;
     }
     put_str(buff, STDOUT_FILENO, false);
@@ -72,7 +85,7 @@ static int isValidFolder(const char* path) {
   if (path) {
     const char* dirTruck = strrchr(path, FILE_SEP);
     if (dirTruck && testFolderList(dirTruck)) {
-      fprintf(stdout, "%s was in ignore\n", dirTruck + 1);
+      fprintf(stdout, "%s is ignore\n", dirTruck + 1);
       return 1;
     }
   }
@@ -93,7 +106,7 @@ static int getFileType(const char* fileName) {
   return -1;
 }
 
-static bool testDotsFiles(const char* name) {
+static inline bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
 
@@ -123,7 +136,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
         continue ;
       }
       else if (ignore && testIsIgnore(de->d_name, ignore)) {
-        fprintf(stdout, "%s was in ignore\n", de->d_name);
+        fprintf(stdout, "%s is ignore\n", de->d_name);
         continue ;
       }
       else {
@@ -215,7 +228,7 @@ static int getBuildType(t_SCB* scb) {
 static int preOpenFile(outFileData* data, const char* fileName, int* maxDep) {
   int error = 0;
   data->configFile.name = (char*)fileName;
-  if (openConfigFile(data))
+  if (openConfigFile(data, true))
     return 1;
   data->isOpen = true;
   error += checkIfFileValid(data);
@@ -261,8 +274,11 @@ int scb(void* data) {
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);
     printfolder(SCB.node, read_byte(SCB.mainData->flags, flags_color));
-    SCB.error += makerStart(&Outdata, av_read(&SCB.mainData->avNoFlags, 1));
-    SCB.error += runOutFile(&Outdata);
+    if (!makerStart(&Outdata, av_read(&SCB.mainData->avNoFlags, 1)))
+      SCB.error += runOutFile(&Outdata);
+    else {
+      SCB.error = 2;
+    }
   }
   freeNode(&SCB.node);
   return SCB.error;

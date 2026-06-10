@@ -25,7 +25,7 @@ bool testIsIgnore(const char* name, const char* list) {
   size_t start = 0;
   size_t end = 0;
   while (list[start]) {
-    extractVar(list, start, &end, ';');
+    extractVar(list, start, &end, EXTRACTVAR_TOC);
     if (strncmp(list + start, name, end) == 0) {
       return true;
     }
@@ -250,9 +250,9 @@ outFileData makerSetup(t_SCB* in, int mode) {
 
 # include "makerMakeFile.h"
 
+//fprintf(stderr, "no config file found, do you want to continue?\n");
+//fprintf(stderr, "[y] yes | [m] make one | anyting else no\n");
 char* dialogBox(const char* question, const char* option, unsigned int responseSize) {
-  //fprintf(stderr, "no config file found, do you want to continue?\n");
-  //fprintf(stderr, "[y] yes | [m] make one | anyting else no\n");
   fprintf(stderr, "%s\t\n", question);
   fprintf(stderr, "%s\t\n", option);
   if (responseSize == 0)
@@ -361,6 +361,7 @@ static int makeChoiseNoConfigFile(char response, outFileData* data) {
   }
   else if (response == 'm') {
     makeDefaultConfigFile(data);
+    return 1;
   }
   return 1;
 }
@@ -390,14 +391,17 @@ static int readConfigFile(t_configValue* file) {
 }
 
 
-int openConfigFile(outFileData* data) {
+int openConfigFile(outFileData* data, bool preopen) {
   if (!data->configFile.name) {
     return 1;
   }
   const char* const root = av_read(&data->scb->mainData->avNoFlags, 0);
-  data->configFile.fd = open(data->configFile.name, O_RDONLY);
+  char  path[MAXPATHLEN + 1];
+  snprintf(path, MAXPATHLEN + 1, "%s/%s", root, data->configFile.name);
+  const char* name  = preopen ? data->configFile.name : path;
+  data->configFile.fd = open(name, O_RDONLY);
   if (data->configFile.fd <= 0) {
-    perror(data->configFile.name);
+    perror(name);
     return 1;
   }
   fprintf(stderr, "path -> %s/%s\n", root, data->configFile.name);
@@ -458,7 +462,7 @@ void extractVar(const char* l, size_t start, size_t *end, char const sep) {
   *end = i;
 }
 
-static int isVarName(char* str, const char* const* var) {
+static int isVarName(const char* const str, const char* const* var) {
   int i = 0;
   for (; var[i]; i++) {}
   const int size = i;
@@ -472,7 +476,7 @@ static int isVarName(char* str, const char* const* var) {
 }
 
 int checkVar(outFileData* data) {
-  if (!data->configFile.fd)
+  if (data->configFile.fd <= 0)
     return 0;
   for (size_t i = 0; data->configFile.rawData[i]; i++) {
     const int res = isVarName(data->configFile.rawData[i], reservedVarNames);
@@ -772,6 +776,8 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
     }
   }
   else {
+    //! undefined behavior if you call a: abc %CC
+    //! wonder if a = "" if cc not set
     //* safe because default value don't have token
     const size_t valueLen = strlen(reserveVarNameDefaultValue[name]);
     memcpy(data->configFile.buffer, reserveVarNameDefaultValue[name], valueLen);
@@ -792,25 +798,30 @@ int makerStart(outFileData* data, const char* file) {
     data->configFile.name = (char*)file;
   }
   else {
-    const int configFile = printConfigFiles(data->scb->node);
-    if (!configFile) {
+    const int nbConfigFile = printConfigFiles(data->scb->node);
+    if (!nbConfigFile) {
       const char* r =  \
-      dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 1);
+      dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 2);
       if (makeChoiseNoConfigFile(r[0], data)) {
         fprintf(stderr, "scb: stop\n");
         return 1;
       }
-    } else if (configFile == 1) {
+    } else if (nbConfigFile == 1) {
       printf("config file found\n");
       data->configFile.name = getConfigName(data, 1);
     }
     else {
       const char* r = dialogBox(WITCH_FILE, "[number]", 2);
       const int n = atoi(r);
+      if (n == 0 || n > nbConfigFile) {
+        error += 1;
+        const int rLen = strlen(r); //rm nl at the end
+        fprintf(stderr, "scb: %.*s invalid value\n", rLen - 1, r);
+      }
       data->configFile.name = getConfigName(data, n);
     }
   }
-  openConfigFile(data);
+  error += openConfigFile(data, false);
   return error;
 }
 

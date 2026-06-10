@@ -9,6 +9,7 @@
 
 typedef struct  {
   char*  name;
+  size_t nameLen;
   int    type;
   size_t fsize;
   size_t id;

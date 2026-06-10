@@ -119,7 +119,7 @@ static ssize_t drawDep(outFileData* data) {
   size_t start = 0;
   size_t end = 0;
   while (depValue[start]) {
-    extractVar(depValue, start, &end, ';');
+    extractVar(depValue, start, &end, EXTRACTVAR_TOC);
     t += output(data->fd, "%.*s\n", (int)end, depValue + start);
     start += end + TOKENSIZE;
   }

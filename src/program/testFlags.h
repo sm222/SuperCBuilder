@@ -6,10 +6,12 @@ enum {
   flags_detach   = 8,
   flags_set_type = 16,
   flags_target   = 32,
-  flags_5        = 64,
+  flags_info     = 64,
   flags_6        = 128,
   flags_7        = 256,
   flags_8        = 512,
+  flags_9        = 1024,
+  flags_10       = 2048,
 };
 
 

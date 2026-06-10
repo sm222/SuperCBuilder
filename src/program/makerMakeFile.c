@@ -12,7 +12,7 @@ static char* capName(const char* name) {
   return newName;
 }
 
-static int getNumberTab(const char* s) {
+static inline int getNumberTab(const char* s) {
   int l = 11 - strlen(s);
   return l / 2;
 }
@@ -154,7 +154,7 @@ static ssize_t drawDep(outFileData* data) {
   size_t start = 0;
   size_t end = 0;
   while (depValue[start]) {
-    extractVar(depValue, start, &end, ';');
+    extractVar(depValue, start, &end, EXTRACTVAR_TOC);
     t += output(data->fd, "\t@%.*s\n", (int)end, depValue + start);
     start += end + TOKENSIZE;
   }
@@ -215,7 +215,7 @@ static ssize_t drawClean(outFileData* data) {
   size_t end = 0;
   const char* const clear = readVariableName(data, Vclean);
   while (clear[start]) {
-    extractVar(clear, start, &end, ';');
+    extractVar(clear, start, &end, EXTRACTVAR_TOC);
     t += output(data->fd, "\t@%.*s\n", (int)end, clear + start);
     start += end + TOKENSIZE;
   }
@@ -230,7 +230,7 @@ static ssize_t drawEnd(outFileData* data) {
   if (isVarInConfig(Vclean, data->var))
     t += drawClean(data);
   t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);
-  t += output(data->fd, "rebuild:\n\t");
+  t += output(data->fd, "regen:\n\t");
   for (int x = 0; x < data->scb->mainData->ac; x++) {
     char* space = x != data->scb->mainData->ac - 1 ? " " : "";
     t += output(data->fd, "%s%s", data->scb->mainData->av[x], space);
