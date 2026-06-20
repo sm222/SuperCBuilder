@@ -1,7 +1,11 @@
 #include "node.h"
 #include <string.h>
 
+static size_t id = 0;
 
+size_t numberOfId(void) {
+  return id;
+}
 
 static t_node* makeNode(char* name, int type) {
   if (!name)
@@ -10,7 +14,6 @@ static t_node* makeNode(char* name, int type) {
   node = calloc(1, sizeof(*node));
   if (!node)
     return NULL;
-  static size_t id = 0;
   node->data.name = strdup(name);
   node->data.nameLen = strlen(name);
   node->data.type = type;
@@ -96,7 +99,7 @@ int deledEmty(t_node** list) {
   }
   int dell = 0;
   HEADDELL: // first time using it
-  while (*list && IS_FOLDER_EMPTY(((t_node*)*list))) {
+  while (*list && IS_FOLDER_EMPTY((*list))) {
     t_node* tmp = (*list)->next;
     t_node* tooFree = *list;
     dellNode(tooFree);

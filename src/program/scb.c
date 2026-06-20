@@ -1,72 +1,102 @@
 #include "scb.h"
 #include "testFlags.h"
 #include "MakerUtils.h"
+#include <sys/ioctl.h>
 
-static int addLine(char* buff, int tab, const size_t max, bool colorMode) {
-  int total = 0;
+
+struct winsize windowData;
+bool           OnStdout = false;
+
+static size_t getLongerName(t_node* node) {
+  size_t longest = 0;
+  if (!node)
+    return 0;
+  while (node) {
+    if (node->data.nameLen > longest)
+      longest = node->data.nameLen;
+    node = node->next;
+  }
+  return longest;
+}
+
+size_t addLine(char* buff, int tab, bool colorMode, const size_t bufflen) {
+  size_t total = 0;
   int color = 31;
   static bool l = false;
-  while (tab) {
-    if (colorMode) {
-      total += snprintf(buff + total, max - total, 
-        CS"\e[%dm"CE"%c  |"RESET, color, l ? '\\' : '/');
-    } else {
-      total += snprintf(buff + total, max - total, "%c  |", l ? '\\' : '/');
-    }
+  int tabC = tab;
+  while (tabC--) {
     color++;
     if (color == 37)
       color = 31;
+  }
+  while (tab > 0) {
+    if (colorMode && OnStdout)
+      total += snprintf(buff + total, bufflen - total,  CS"\e[%dm"CE"%c|%s", color, l ? '=' : '+', RESET);
+    else
+      total += snprintf(buff + total, bufflen - total, "%c|", l ? '=' : '+');
     tab--;
   }
   l = !l;
   return total;
 }
 
-static size_t longestName(t_node* list) {
-  size_t longest = 0;
-  while (list) {
-    const size_t l = list->data.nameLen;
-    if (IS_FILE(list) && l > longest)
-      longest = l;
-    list = list->next;
-  }
-  return longest;
-}
-
-void _printfolder(t_node* list, int tab, bool colorMode) {
-  const int size = 80;
-  const size_t buffLen = size * 4;
-  int currentSize = 0;
-  char buff[buffLen];
-  int len = 0;
-  const size_t longName = longestName(list);
-  while (list) {
-    const int NameSize = (int)(longName) - list->data.nameLen;
-    if (currentSize == 0 || list->data.type == folder ) {
-      len = addLine(buff, tab, buffLen, colorMode);
-      len += snprintf(buff + len, buffLen - len, "%s%*.s ", list->data.name, NameSize, "");
-      currentSize += len;
-    }
-    else {
-      len = snprintf(buff, buffLen, "%s%*.s " ,list->data.name, NameSize, "");
-      currentSize += len;
+t_node* printFiles(t_node* node, int tab, bool colorMode) {
+  if (!node)
+    return NULL;
+  const size_t screen = (windowData.ws_col > 120 ? windowData.ws_col / 1.5 : windowData.ws_col);
+  const size_t with = (OnStdout ? screen : 120) + 1;
+  unsigned short items = 0;
+  const size_t longest = getLongerName(node);
+  while (node) {
+    size_t lineLen = (tab * 4) * (colorMode ?  (MAX_COLORLEN * 2): 1);
+    t_node* head = node;
+    unsigned short text = (tab * 4);
+    while (head && text + longest < with) {
+      text += longest;
+      items++;
+      head = head->next;
+    } 
+    if (items == 0) { return NULL; }
+    lineLen += text;
+    char space[longest + 1];
+    char buff[lineLen + 1];
+    size_t off = addLine(buff, tab, colorMode, lineLen);
+    memset(space, ' ', longest);
+    space[longest] = 0;
+    while (items--) {
+      int size = longest - node->data.nameLen - 1;
+      off += snprintf(buff + off, lineLen - off, "%s%.*s%c", \
+        node->data.name, size, space, items ? ' ' : '\n');
+      node = node->next;
     }
     put_str(buff, STDOUT_FILENO, false);
-    if (list->data.type == folder || !list->next || currentSize >= size) {
-      printNl(STDOUT_FILENO);
-      currentSize = 0;
-    }
-    if (list && list->child)
-      _printfolder(list->child, tab + 1, colorMode);
-    list = list->next;
   }
-  if (list)
-    list = list->next;
+  return NULL;
 }
 
+static void _printfolder(t_node* list, int tab, bool colorMode) {
+  while (list && IS_FOLDER(list)) {
+    size_t buffSize = list->data.nameLen + 3 + (tab * 4) * (colorMode ?  (MAX_COLORLEN * 2): 1);
+    char buff[buffSize + 1];
+    size_t off = addLine(buff, tab, colorMode, buffSize);
+    snprintf(buff + off, buffSize - off, "*%s\n", list->data.name);
+    put_str(buff, STDOUT_FILENO, false);
+    if (list && list->child)
+      _printfolder(list->child, tab + 1, colorMode);
+  list = list->next;
+  }
+  printFiles(list, tab, colorMode);
+}
+
+
 void printfolder(t_node* list, bool colorMode) {
+  if (isatty(STDOUT_FILENO) == 1) {
+    OnStdout = true;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowData);
+  }
   _printfolder(list, 0, colorMode);
   printNl(STDOUT_FILENO);
+  fprintf(stderr, "%u %u\n", windowData.ws_col, windowData.ws_row);
 }
 
 static int testFolderList(const char* folder) {
@@ -115,8 +145,10 @@ static const char* ignore = NULL;
 //extractVar
 
 int mapDir(const char* path, t_node** head, unsigned int maxDep) {
-  if (isValidFolder(path) || maxDep == 0)
-    return 1; // only care if error happen of first try
+  /*only care if error happen of first try*/
+  if (isValidFolder(path)) { return 1; }
+  if (maxDep == 0) { return 2; }
+  if (numberOfId() > MAX_NODE) { return 2;}
   struct dirent* de = NULL;
   DIR* dr = opendir(path);
   if (dr == NULL) {
@@ -129,7 +161,10 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
     de = readdir(dr);
     if (de) {
       snprintf(wd, PATH_MAX, "%s/%s", path, de->d_name);
-      stat(wd, &stats);
+      if (lstat(wd, &stats) != 0) {
+        perror(de->d_name);
+        break ;
+      }
       const int type = S_ISDIR(stats.st_mode) ? folder : getFileType(de->d_name);
       if (testDotsFiles(de->d_name) || \
       (type == unknown && type != folder) || isValidFolder(wd)) {
@@ -141,7 +176,11 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
       }
       else {
         t_node* t = makeNodeLast(de->d_name, type, head);
-        if (type == folder) {
+        if (!t) {
+          perror("MapDir");
+          break ;
+        }
+        if (IS_FOLDER(t)) {
           mapDir(wd, &t->child, --maxDep);
           t->data.fsize = getNodeLen(t->child);
         }
@@ -249,7 +288,7 @@ int scb(void* data) {
   if (setup(&SCB, data)) {
     return 1;
   }
-  int maxDep = 60;
+  int maxDep = 8;
   int buildTypde = getBuildType(&SCB);
   outFileData Outdata = makerSetup(&SCB, buildTypde);
   if (Outdata.target == unknown) {

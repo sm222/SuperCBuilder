@@ -6,6 +6,7 @@
 # include "fileType.h"
 # include <stdlib.h> // calloc free
 
+# define MAX_NODE 100000
 
 typedef struct  {
   char*  name;
@@ -29,6 +30,7 @@ typedef struct s_node {
 # define  IS_C_CPP(node)         (IS_C(node) || IS_CPP(node))
 # define  IS_SCB(node)           (node->data.type == configFile)
 
+size_t       numberOfId(void);
 
 int          freeNode(t_node** list);
 t_node*      makeNodeLast(char* name, int type, t_node** list);

@@ -1,9 +1,13 @@
 
 param --
+[ ]debug flag
+
 
 code base --
 [ ]better doc
 [ ]add to doc variable the way the are read
+[ ]optimise color output
+   > remove adding color for other block
 
 outfile -- 
 [ ]add shell
@@ -11,6 +15,8 @@ outfile --
 configfile --
 [ ]look for dup name in user var
 [ ]make better file promp choise
+[ ]keyword log?
+
 
 work in progress --
 [-]clean code,
@@ -20,6 +26,11 @@ work in progress --
 
 
 done --
+[-] Sat 20 Jun 2026
+[x]add safety for 'mapDir'
+[x]redo the print system, more readable and try to use all the screen
+[x]fix MAX_COLORLEN form 20 to 30
+[x]add limit of node under MAX_NODE
 [-] Wed 10 Jun 2026
 [x]folder printing is now more clean
 [x]makefile add regen as a rule, so it can call back scb to add missing files

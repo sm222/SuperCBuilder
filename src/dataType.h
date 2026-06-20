@@ -62,7 +62,7 @@ static const char* const SYS_NAMES[] = {
 #  define PIK    CS "\e[38;5;176m" CE
 #  define RESET  CS "\e[0m" CE
 #  define CLE    CS "\e[1;1H\x1b[2J" CE
-#  define MAX_COLORLEN 20
+#  define MAX_COLORLEN 30
 # endif
 
 
