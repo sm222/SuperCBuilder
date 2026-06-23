@@ -7,10 +7,10 @@
 struct winsize windowData;
 bool           OnStdout = false;
 
-static size_t getLongerName(t_node* node) {
+size_t getLongerName(t_node* node) {
   size_t longest = 0;
   if (!node)
-    return 0;
+    return 1;
   while (node) {
     if (node->data.nameLen > longest)
       longest = node->data.nameLen;
@@ -19,84 +19,89 @@ static size_t getLongerName(t_node* node) {
   return longest;
 }
 
-size_t addLine(char* buff, int tab, bool colorMode, const size_t bufflen) {
-  size_t total = 0;
-  int color = 31;
+size_t addLine(int tab, const int* colorMode, int mode) {
   static bool l = false;
+  bool        wasTab = false;
+  const int size = 9999;
+  char line[size + 1];
+  int color = 31 + (mode ? 10: 0);
   int tabC = tab;
   while (tabC--) {
     color++;
-    if (color == 37)
-      color = 31;
+    if (color == 37 + (mode ? 10: 0))
+    color = 31 + (mode ? 10: 0);
   }
-  while (tab > 0) {
-    if (colorMode && OnStdout)
-      total += snprintf(buff + total, bufflen - total,  CS"\e[%dm"CE"%c|%s", color, l ? '=' : '+', RESET);
-    else
-      total += snprintf(buff + total, bufflen - total, "%c|", l ? '=' : '+');
-    tab--;
+  char c = mode ? '>' : '#';
+  size_t total = 0;
+  if (tab && *colorMode && OnStdout) {
+    total += snprintf(line + total, size - total, "\e[%dm", color);
+    wasTab = true;
   }
-  l = !l;
+  while (tab--) {
+    l = !l;
+    total += snprintf(line + total, size - total, "%c%c", l ? c : ' ', !l ? c : ' ');
+  }
+  if (wasTab) { total += snprintf(line + total, size - total, "\e[0m"); }
+  write(STDOUT_FILENO, line, total);
   return total;
 }
 
-t_node* printFiles(t_node* node, int tab, bool colorMode) {
+size_t putSpace(char* space, size_t max, t_node* const n, const int* colorMode) {
+  size_t l = 0;
+  const int size = (max - n->data.nameLen) - (colorMode ? 1 : 0);
+  space[size] = 0;
+  l += put_str(space, STDOUT_FILENO, false);
+  space[size] = ' ';
+  return l;
+}
+
+t_node* printFiles(t_node* node, int tab, const int* colorMode) {
   if (!node)
     return NULL;
-  const size_t screen = (windowData.ws_col > 120 ? windowData.ws_col / 1.5 : windowData.ws_col);
-  const size_t with = (OnStdout ? screen : 120) + 1;
-  unsigned short items = 0;
-  const size_t longest = getLongerName(node);
+  const int with = OnStdout ? (windowData.ws_col / 1.8f) : 180;
+  const size_t space_len = getLongerName(node) + 2;
+  char  space[space_len + 1];
+  memset(space, ' ', space_len);
+  space[space_len + 1] = 0;
   while (node) {
-    size_t lineLen = (tab * 4) * (colorMode ?  (MAX_COLORLEN * 2): 1);
-    t_node* head = node;
-    unsigned short text = (tab * 4);
-    while (head && text + longest < with) {
-      text += longest;
-      items++;
-      head = head->next;
-    } 
-    if (items == 0) { return NULL; }
-    lineLen += text;
-    char space[longest + 1];
-    char buff[lineLen + 1];
-    size_t off = addLine(buff, tab, colorMode, lineLen);
-    memset(space, ' ', longest);
-    space[longest] = 0;
-    while (items--) {
-      int size = longest - node->data.nameLen - 1;
-      off += snprintf(buff + off, lineLen - off, "%s%.*s%c", \
-        node->data.name, size, space, items ? ' ' : '\n');
+    int total = 0;
+    addLine(tab, colorMode, false);
+    while (node && total < with) {
+      if (*colorMode) {
+        char cb[MAX_COLORLEN * 2 + 2];
+        sprintf(cb, "\e[4%dm \e[0m", node->data.type);
+        put_str(cb, STDOUT_FILENO, false);
+      }
+      total += put_str(node->data.name, STDOUT_FILENO, false);
+      total += putSpace(space, space_len, node, colorMode);
       node = node->next;
     }
-    put_str(buff, STDOUT_FILENO, false);
+    printNl(STDOUT_FILENO);
   }
   return NULL;
 }
 
-static void _printfolder(t_node* list, int tab, bool colorMode) {
+static void _printfolder(t_node* list, int tab, const int* colorMode) {
   while (list && IS_FOLDER(list)) {
-    size_t buffSize = list->data.nameLen + 3 + (tab * 4) * (colorMode ?  (MAX_COLORLEN * 2): 1);
-    char buff[buffSize + 1];
-    size_t off = addLine(buff, tab, colorMode, buffSize);
-    snprintf(buff + off, buffSize - off, "*%s\n", list->data.name);
-    put_str(buff, STDOUT_FILENO, false);
+    addLine(tab, colorMode, true);
+    put_str(list->data.name, STDOUT_FILENO, true);
     if (list && list->child)
       _printfolder(list->child, tab + 1, colorMode);
-  list = list->next;
+    list = list->next;
   }
   printFiles(list, tab, colorMode);
 }
 
 
-void printfolder(t_node* list, bool colorMode) {
+void printfolder(t_node* list, const int colorMode) {
+  bzero(&windowData, sizeof(windowData));
   if (isatty(STDOUT_FILENO) == 1) {
     OnStdout = true;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowData);
   }
-  _printfolder(list, 0, colorMode);
+  const int C_colormode = colorMode;
+  _printfolder(list, 0, &C_colormode);
   printNl(STDOUT_FILENO);
-  fprintf(stderr, "%u %u\n", windowData.ws_col, windowData.ws_row);
 }
 
 static int testFolderList(const char* folder) {
@@ -171,7 +176,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
         continue ;
       }
       else if (ignore && testIsIgnore(de->d_name, ignore)) {
-        fprintf(stdout, "%s is ignore\n", de->d_name);
+        fprintf(stderr, "%s is ignore\n", de->d_name);
         continue ;
       }
       else {

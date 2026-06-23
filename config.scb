@@ -1,7 +1,7 @@
 NAME:scb
 CC:gcc
 
-#debug:-g
+debug:-g
 
 CFLAGS:
   -Wall -Werror -Wextra 

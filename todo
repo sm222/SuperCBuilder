@@ -8,6 +8,7 @@ code base --
 [ ]add to doc variable the way the are read
 [ ]optimise color output
    > remove adding color for other block
+[ ]fix bug with continue with no config file
 
 outfile -- 
 [ ]add shell
@@ -26,6 +27,9 @@ work in progress --
 
 
 done --
+[x]
+[x]add color prefix for color mode
+[x]fix render bug for color mode '-c'
 [-] Sat 20 Jun 2026
 [x]add safety for 'mapDir'
 [x]redo the print system, more readable and try to use all the screen
