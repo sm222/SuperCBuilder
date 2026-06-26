@@ -1,11 +1,17 @@
 NAME:scb
 CC:gcc
 
+dev:
+ -D DEBUG_COLOR_TRUE
+
+
 debug:-g
 
 CFLAGS:
   -Wall -Werror -Wextra 
-  %debug 
+  %debug %_LOG 
+
+#%dev
 
 default:
   -D=HELLO
@@ -13,7 +19,7 @@ default:
 test:
   %_LINUX   -D OS=LINUX
   %_WINDOWS -D OS=WINDOWS
-  %_MAC     -D OS=MACOS
+  %_MACOS   -D OS=MACOS
   %_DEFAULT -D OS=D
 
 # if no default and no case is catch var woud be empty
@@ -24,6 +30,7 @@ baz:C
   %foo\wd
   %test
   %_ROOT
+  %_ENV_PWD %LOG
 
 ING:
   doc!

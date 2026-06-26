@@ -226,7 +226,7 @@ static ssize_t drawClean(outFileData* data) {
 static ssize_t drawEnd(outFileData* data) {
   ssize_t t = 0;
   const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
-  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n");
+  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n\n");
   if (isVarInConfig(Vclean, data->var))
     t += drawClean(data);
   t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);

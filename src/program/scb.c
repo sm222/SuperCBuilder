@@ -2,6 +2,7 @@
 #include "testFlags.h"
 #include "MakerUtils.h"
 #include <sys/ioctl.h>
+#include <assert.h>
 
 
 struct winsize windowData;
@@ -43,6 +44,9 @@ size_t addLine(int tab, const int* colorMode, int mode) {
   }
   if (wasTab) { total += snprintf(line + total, size - total, "\e[0m"); }
   write(STDOUT_FILENO, line, total);
+  # ifdef DEBUG_COLOR_TRUE
+  assert(*colorMode == 1);
+  # endif
   return total;
 }
 
@@ -318,7 +322,7 @@ int scb(void* data) {
     moveFolderUp(&SCB.node);
     deledEmty(&SCB.node);
     printfolder(SCB.node, read_byte(SCB.mainData->flags, flags_color));
-    if (!makerStart(&Outdata, av_read(&SCB.mainData->avNoFlags, 1)))
+    if (!makerStart(&Outdata))
       SCB.error += runOutFile(&Outdata);
     else {
       SCB.error = 2;

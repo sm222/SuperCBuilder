@@ -543,10 +543,11 @@ static inline int isTokens(int c) {
 
 static inline ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
-  while (s[i] && \
-  !isspace(s[i]) && \
-  isalnum(s[i]) && \
-  !isTokens(s[i]))
+  while ((s[i] && \
+    !isspace(s[i]) && \
+    isalnum(s[i]) && \
+    !isTokens(s[i])) \
+    || s[i] == '_')
   { i++; }
   return i;
 }
@@ -622,13 +623,19 @@ int checkIfFileValid(outFileData* data) {
   return 0;
 }
 
+static size_t getEnvNameLen(const char* s) {
+  size_t i = 0;
+  while (!isspace(s[i])) { i++; }
+  return i;
+}
+
 static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   size_t i = 0;
   if (!data->scb->mainData->env)
     return ;
   const char* const* env = data->scb->mainData->env;
   s += 4;
-  const size_t varLen = findVarLen(s);
+  const size_t varLen = getEnvNameLen(s);
   while (env[i]) {
     if (strncmp(env[i], s, varLen) == 0 && env[i][varLen] == '=') {
       addTo(data->configFile.buffer, env[i] + varLen + TOKENSIZE, total);
@@ -638,32 +645,53 @@ static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   }
 }
 
+bool isValidKeyword(const char* s, size_t i) {
+  const size_t keywordLen = strlen(keyWords[i]);
+  if (strncmp(s, keyWords[i], keywordLen) == 0) {
+    if (i == k_env) { return true; }
+    else {
+      return isspace(s[keywordLen]);
+    }
+  }
+  return false;
+}
+
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
   const size_t len = findVarLen(s);
   *dis += len;
   short i = 0;
   for ( ; keyWords[i]; i++) {
-    if (strncmp(s, keyWords[i], len) == 0) { break ; }
+    if (isValidKeyword(s, i)) { break ; }
   }
   // test system target
   if (i <= NUMBER_OF_OS - 1) {
     return !(data->target == i);
   }
-  if (i == k_env) {
+  else if (i == k_env) {
     readEnv(data, s, total);
-    *dis += strlen("_SHELL");
     return 0;
   }
-  if (i == k_shell) {
+  else if (i == k_shell) {
     if (!data->shellFt)
       return 1;
     data->shellFt(data, total);
     return 0;
   }
-  if (i == k_root) {
+  else if (i == k_root) {
     const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
     addTo(data->configFile.buffer, path, total);
     addToc(data->configFile.buffer, FILE_SEP, (*total)++);
+  }
+  else if (i == k_log) { fprintf(stderr, "info:%s\n", data->configFile.buffer); }
+  else if (i == k_dev) {
+    const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
+    return !isDevMode; // read rest of line if dev mode
+  } else if (i == k_msg) {
+    fprintf(stderr, "msg:%s\n", s + len);
+    return 1;
+  } else {
+    fprintf(stderr, "scb: %.*s ivalid keyword\n", (int)len, s);
+    return 1;
   }
   return 0;
 }
@@ -790,36 +818,30 @@ inline int isVarInConfig(int var, t_reserveVar varList) {
   return varList.varValue[var];
 }
 
-int makerStart(outFileData* data, const char* file) {
-  if (data->isOpen)
-    return 0;
+int makerStart(outFileData* data) {
   int error = 0;
-  if (file) {
-    data->configFile.name = (char*)file;
+  if (data->isOpen) { return 0; }
+  const int nbConfigFile = printConfigFiles(data->scb->node);
+  if (!nbConfigFile) {
+  const char* r =  \
+  dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 2);
+    if (makeChoiseNoConfigFile(r[0], data)) {
+      fprintf(stderr, "scb: stop\n");
+      return 1;
+    } else { return 0; } // continue case
+  } else if (nbConfigFile == 1) {
+    printf("config file found\n");
+    data->configFile.name = getConfigName(data, 1);
   }
   else {
-    const int nbConfigFile = printConfigFiles(data->scb->node);
-    if (!nbConfigFile) {
-      const char* r =  \
-      dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 2);
-      if (makeChoiseNoConfigFile(r[0], data)) {
-        fprintf(stderr, "scb: stop\n");
-        return 1;
-      }
-    } else if (nbConfigFile == 1) {
-      printf("config file found\n");
-      data->configFile.name = getConfigName(data, 1);
+    const char* r = dialogBox(WITCH_FILE, "[number]", 2);
+    const int n = atoi(r);
+    if (n == 0 || n > nbConfigFile) {
+      error += 1;
+      const int rLen = strlen(r); //rm nl at the end
+      fprintf(stderr, "scb: %.*s invalid value\n", rLen - 1, r);
     }
-    else {
-      const char* r = dialogBox(WITCH_FILE, "[number]", 2);
-      const int n = atoi(r);
-      if (n == 0 || n > nbConfigFile) {
-        error += 1;
-        const int rLen = strlen(r); //rm nl at the end
-        fprintf(stderr, "scb: %.*s invalid value\n", rLen - 1, r);
-      }
-      data->configFile.name = getConfigName(data, n);
-    }
+    data->configFile.name = getConfigName(data, n);
   }
   error += openConfigFile(data, false);
   return error;

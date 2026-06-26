@@ -7,7 +7,7 @@ enum {
   flags_set_type = 16,
   flags_target   = 32,
   flags_info     = 64,
-  flags_6        = 128,
+  flags_dev      = 128,
   flags_7        = 256,
   flags_8        = 512,
   flags_9        = 1024,

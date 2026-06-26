@@ -132,6 +132,9 @@ static const char* const keyWords[] = {
   "ENV_",
   "SHELL",
   "ROOT",
+  "LOG",
+  "DEV",
+  "MSG",
   0x0,
 };
 
@@ -152,6 +155,9 @@ enum {
   k_env     = 3,
   k_shell   = 4,
   k_root    = 5,
+  k_log     = 6,
+  k_dev     = 7,
+  k_msg     = 8,
 };
 
 
@@ -191,7 +197,7 @@ typedef struct {
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);
-int          makerStart(outFileData* data, const char* file);
+int          makerStart(outFileData* data);
 int          runOutFile(outFileData* data);
 
 int         checkIfFileValid(outFileData* data);
