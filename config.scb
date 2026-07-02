@@ -11,8 +11,6 @@ CFLAGS:
   -Wall -Werror -Wextra 
   %debug %_LOG 
 
-#%dev
-
 default:
   -D=HELLO
 
@@ -23,25 +21,24 @@ test:
   %_DEFAULT -D OS=D
 
 # if no default and no case is catch var woud be empty
-foo:A
-bar:B
-  %baz
-baz:C
-  %foo\wd
-  %test
-  %_ROOT
-  %_ENV_PWD %LOG
 
 ING:
   doc!
-PROG:
-  %debug 
-  %default 
 
 sys:
-  %_LINUX linux heh 
-  %_WINDOWS B
-  %_MACOS C
+  %_MSG target ->
+  %_MSG linux
+  %_MSG end
+  %_LINUX %_MSG linux
+  %_WINDOWS %_MSG windows
+  %_MACOS %_MSG macos
+
+
+PROG:
+  %sys
+  %debug 
+  %default %_LOG
+
 
 DEP:
   echo foo %foo!

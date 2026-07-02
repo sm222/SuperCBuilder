@@ -179,6 +179,8 @@ typedef struct s_reserveVar {
 
 typedef void(*shellCall)(void*, ssize_t*);
 
+# define MAX_MSG_LEN MAXPATHLEN
+
 typedef struct {
   bool        isOpen;
   bool        cpp;
@@ -193,6 +195,8 @@ typedef struct {
   t_reserveVar  var;
   t_configValue configFile;
   shellCall     shellFt;
+  char          msg[MAX_MSG_LEN];
+  ssize_t       msgLen;
   char          shellEnd[10];
 } outFileData;
 

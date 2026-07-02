@@ -430,10 +430,10 @@ void printVar(outFileData* data) {
 }
 
 int removeEndlP(char* value, size_t p) {
-  if (!value)
+  if (!value || p < 1)
     return 0;
-  if (value[p] == '\n') {
-    value[p] = 0;
+  if (value[p - 1] == '\n') {
+    value[p - 1] = 0;
     return 1;
   }
   return 0;
@@ -442,10 +442,12 @@ int removeEndlP(char* value, size_t p) {
 int removeEndl(char* value) {
   if (!value)
     return 0;
-  size_t l = strlen(value) - 1;
-  if (value[l] == '\n') {
-    value[l] = 0;
-    return 1;
+  ssize_t l = strlen(value);
+  for (; l >= 0; l--) {
+    if (value[l] == '\n') {
+      value[l] = 0;
+      return 1;
+    }
   }
   return 0;
 }
@@ -650,7 +652,7 @@ bool isValidKeyword(const char* s, size_t i) {
   if (strncmp(s, keyWords[i], keywordLen) == 0) {
     if (i == k_env) { return true; }
     else {
-      return isspace(s[keywordLen]);
+      return isspace(s[keywordLen]) || isTokens(s[keywordLen]);
     }
   }
   return false;
@@ -687,10 +689,13 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
     return !isDevMode; // read rest of line if dev mode
   } else if (i == k_msg) {
-    fprintf(stderr, "msg:%s\n", s + len);
+    addTo(data->msg, s + len, &data->msgLen);
+    //removeEndl(data->msg);
+    //fprintf(stderr, "%d|%s|\n", removeEndl(data->msg), s + len);
+    fprintf(stderr, "msg:%s\n", data->msg);
     return 1;
   } else {
-    fprintf(stderr, "scb: %.*s ivalid keyword\n", (int)len, s);
+    fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
     return 1;
   }
   return 0;
