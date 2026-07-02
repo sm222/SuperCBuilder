@@ -288,7 +288,7 @@ int scb(void* data) {
   if (setup(&SCB, data)) {
     return 1;
   }
-  int maxDep = 8;
+  int maxDep = 60;
   int buildTypde = getBuildType(&SCB);
   outFileData Outdata = makerSetup(&SCB, buildTypde);
   if (Outdata.target == unknown) {
