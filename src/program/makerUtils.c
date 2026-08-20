@@ -505,7 +505,7 @@ static bool isVar(const char* line, const char* varName, size_t l) {
 
 ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
   const size_t len = strlen(line);
-  if (MAX_VAR_NAME_LEN - *curentLen + len <= 0) {
+  if (MAX_VAR_NAME_LEN - (int)(*curentLen) + (int)len < 0) {
     fprintf(stderr, "scb: var name is too long\n");
     return 0;
   }
@@ -515,8 +515,9 @@ ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
 }
 
 ssize_t addToc(char* to, char c, size_t curentLen) {
-  if (MAX_VAR_NAME_LEN - curentLen <= 0) {
+  if (MAX_VAR_NAME_LEN - (int)curentLen < 0) {
     fprintf(stderr, "scb: var is too long\n");
+    to[curentLen] = 0;
     return 0;
   }
   to[curentLen] = c;
@@ -689,10 +690,6 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
     return !isDevMode; // read rest of line if dev mode
   } else if (i == k_msg) {
-    addTo(data->msg, s + len, &data->msgLen);
-    //removeEndl(data->msg);
-    //fprintf(stderr, "%d|%s|\n", removeEndl(data->msg), s + len);
-    fprintf(stderr, "msg:%s\n", data->msg);
     return 1;
   } else {
     fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
@@ -737,13 +734,16 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
     default:
       fprintf(stderr, "%s: line %zu unknown token ascii[%d]\\%c replace by space\n", warning, ++i , t, t);
   }
-  addToc(data->configFile.buffer, toAdd, (*total)++);
-  return 1;
+  return addToc(data->configFile.buffer, toAdd, (*total)++);
 }
 
+# define MAX_RECRSIVE_DEP 2000
+static int recursiveDep = 0;
+
 static size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
-  if (*total >= MAX_VAR_NAME_LEN)
+  if ((int)(*total) > MAX_VAR_NAME_LEN || recursiveDep == MAX_RECRSIVE_DEP)
     return 0;
+  recursiveDep++;
   size_t i = 0;
   const char* line = NULL;
   const size_t nameLen = findVarLen(name);
@@ -774,7 +774,8 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
         j += 2;
       }
       else {
-        addToc(data->configFile.buffer, line[j], (*total)++);
+        addToc(data->configFile.buffer, line[j], (*total));
+        (*total)++;
         j++;
       }
     }
@@ -799,6 +800,7 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
   size_t i = 0;
   ssize_t curentLen = 0;
   const size_t len = strlen(reservedVarNames[name]);
+  recursiveDep = 0;
   if (isVarInConfig(name, data->var)) {
     while (data->configFile.rawData[i]) {
       if (isVar(data->configFile.rawData[i], reservedVarNames[name], len)) {
@@ -820,6 +822,8 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
 
 
 inline int isVarInConfig(int var, t_reserveVar varList) {
+  if (var > (int)varList.size - 1)
+    return false;
   return varList.varValue[var];
 }
 

@@ -26,10 +26,6 @@ ING:
   doc!
 
 sys:
-  %_MSG target ->
-  %_MSG linux
-  %_MSG end
-  %_LINUX %_MSG linux
   %_WINDOWS %_MSG windows
   %_MACOS %_MSG macos
 
