@@ -660,15 +660,15 @@ bool isValidKeyword(const char* s, size_t i) {
 }
 
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
-  const size_t len = findVarLen(s);
+  const size_t len = findVarLen(s) + 1;
   *dis += len;
   short i = 0;
   for ( ; keyWords[i]; i++) {
     if (isValidKeyword(s, i)) { break ; }
   }
   // test system target
-  if (i <= NUMBER_OF_OS - 1) {
-    return !(data->target == i);
+  if (i < NUMBER_OF_OS) {
+    return (data->target == i ? 0 : 1);
   }
   else if (i == k_env) {
     readEnv(data, s, total);
@@ -689,8 +689,6 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   else if (i == k_dev) {
     const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
     return !isDevMode; // read rest of line if dev mode
-  } else if (i == k_msg) {
-    return 1;
   } else {
     fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
     return 1;
@@ -784,7 +782,8 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       addTo(data->configFile.buffer, data->shellEnd, total);
       data->shellEnd[0] = 0;
     }
-    line = data->configFile.rawData[++i];
+    line = data->configFile.rawData[i] ? data->configFile.rawData[i + 1] : NULL;
+    i++;
     if (isLineValid(line) == L_varValue) {
       j = skipWhiteSpace(line, 0);
       nlValid = true;
@@ -795,7 +794,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
 
 
 //* return value from file or default value
-char* readVariableName(outFileData* data, e_reservedVarNames name) {
+const char* readVariableName(outFileData* data, e_reservedVarNames name) {
   bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
   size_t i = 0;
   ssize_t curentLen = 0;
@@ -814,7 +813,7 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
     //! undefined behavior if you call a: abc %CC
     //! wonder if a = "" if cc not set
     //* safe because default value don't have token
-    const size_t valueLen = strlen(reserveVarNameDefaultValue[name]);
+    const size_t valueLen = strlen(reserveVarNameDefaultValue[name]) + 1;
     memcpy(data->configFile.buffer, reserveVarNameDefaultValue[name], valueLen);
   }
   return data->configFile.buffer;
@@ -822,7 +821,7 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
 
 
 inline int isVarInConfig(int var, t_reserveVar varList) {
-  if (var > (int)varList.size - 1)
+  if (var > (int)varList.size)
     return false;
   return varList.varValue[var];
 }

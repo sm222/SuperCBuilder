@@ -226,7 +226,7 @@ void        printOutVar(t_outVar* head);
 ssize_t     addToc(char* to, char c, size_t curentLen);
 
 
-char*       readVariableName(outFileData* data, e_reservedVarNames name);
+const char* readVariableName(outFileData* data, e_reservedVarNames name);
 
 bool        newFile(char* name, outFileData* data);
 int         openConfigFile(outFileData* data, bool preopen);
