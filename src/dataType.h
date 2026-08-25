@@ -3,7 +3,7 @@
 # define DATA_TYPE_H
 
 # include <error.h>
-# include <sysexits.h>
+//# include <sysexits.h>
 # include <string.h>
 # include <strings.h>
 # include <errno.h>

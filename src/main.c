@@ -25,7 +25,7 @@ static bool test_name(const char* name) {
 int setStart(void*);
 
 static int base(t_mainData data, int fdIn, int fdOut) {
-  int status = EX_OK;
+  int status = 0;
   t_settings programSettings = {
     .stdIn        = fdIn,        //*
     .stdOut       = fdOut,       //

@@ -33,7 +33,7 @@ char   value__[VALUE_MAX_SIZE];
 
 
 char* grab_value(t_settings* settings, const char* value, int type) {
-  bzero(&value__, VALUE_MAX_SIZE);
+  memset(&value__, 0, VALUE_MAX_SIZE);
   const char*  p = value;
   if (!p)
     return value__;

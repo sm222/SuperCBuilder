@@ -170,7 +170,7 @@ char* get_next_line(int fd) {
     return (NULL);
   t_val.rv = 0;
   while (ft_find_nl(book) == '0') {
-    bzero(t_val.readtmp, BUFFER_SIZE + 1);
+    memset(t_val.readtmp, 0, BUFFER_SIZE + 1);
     t_val.rv = read(fd, t_val.readtmp, BUFFER_SIZE);
     if (t_val.rv <= 0)
       break ;
@@ -235,7 +235,7 @@ static int getTarget(t_SCB* scb) {
 
 outFileData makerSetup(t_SCB* in, int mode) {
   outFileData data;
-  bzero(&data, sizeof(data));
+  memset(&data, 0, sizeof(data));
   data.var.size = (sizeof(reservedVarNames) / sizeof(char*)) - 1;
   data.scb = in;
   data.outputType = mode;
@@ -668,7 +668,7 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   }
   // test system target
   if (i < NUMBER_OF_OS) {
-    return (data->target == i ? 0 : 1);
+    return (!(data->target == i));
   }
   else if (i == k_env) {
     readEnv(data, s, total);
@@ -795,7 +795,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
 
 //* return value from file or default value
 const char* readVariableName(outFileData* data, e_reservedVarNames name) {
-  bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
+  memset(data->configFile.buffer, 0, MAX_VAR_NAME_LEN);
   size_t i = 0;
   ssize_t curentLen = 0;
   const size_t len = strlen(reservedVarNames[name]);

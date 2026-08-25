@@ -1,11 +1,13 @@
 #include "scb.h"
 #include "testFlags.h"
 #include "MakerUtils.h"
-#include <sys/ioctl.h>
 #include <assert.h>
 
 
+# ifndef SYS_WIN
+#include <sys/ioctl.h>
 struct winsize windowData;
+#endif
 bool           OnStdout = false;
 
 size_t getLongerName(t_node* node) {
@@ -62,7 +64,11 @@ size_t putSpace(char* space, size_t max, t_node* const n, const int* colorMode) 
 t_node* printFiles(t_node* node, int tab, const int* colorMode) {
   if (!node)
     return NULL;
+  #ifndef SYS_WIN
   const int with = OnStdout ? (windowData.ws_col / 1.8f) : 180;
+  # else
+  const int with = 180;
+  #endif
   const size_t space_len = getLongerName(node) + 2;
   char  space[space_len + 1];
   memset(space, ' ', space_len);
@@ -98,11 +104,13 @@ static void _printfolder(t_node* list, int tab, const int* colorMode) {
 
 
 void printfolder(t_node* list, const int colorMode) {
-  bzero(&windowData, sizeof(windowData));
+  #ifndef SYS_WIN
+  memset(&windowData, 0, sizeof(windowData));
   if (isatty(STDOUT_FILENO) == 1) {
     OnStdout = true;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowData);
   }
+  #endif
   const int C_colormode = colorMode;
   _printfolder(list, 0, &C_colormode);
   printNl(STDOUT_FILENO);
@@ -215,7 +223,7 @@ static int grabAv(t_SCB* setting, int avSize) {
 }
 
 static int setup(t_SCB* setting, void* mainData) {
-  bzero(setting, sizeof(*setting));
+  memset(setting, 0, sizeof(*setting));
   setting->mainData = mainData;
   if (getcwd(setting->originPath, PATH_MAX) != setting->originPath) {
     perror("getcwd");
