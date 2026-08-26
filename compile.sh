@@ -11,7 +11,7 @@ safety=" "
 rule=" -g -D PROG_NAME=\"$name\" $safety "
 
 cc="x86_64-w64-mingw32-gcc"
-compileLine="cc $rule -D=SETUP_EXTERN -Wall -Werror -Wextra  $files $progameFiles -o $name"
+compileLine="$cc $rule -D=SETUP_EXTERN -Wall -Werror -Wextra  $files $progameFiles -o $name"
 
 #
 

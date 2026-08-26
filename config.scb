@@ -1,5 +1,9 @@
 NAME:scb
-CC:gcc
+
+CC:
+  %_LINUX\ cc
+  %_MACOS\ cc
+  %_WINDOWS\ x86_64-w64-mingw32-gcc
 
 dev:
  -D DEBUG_COLOR_TRUE

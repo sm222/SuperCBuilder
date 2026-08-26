@@ -161,6 +161,14 @@ static const char* ignore = NULL;
 
 //extractVar
 
+int statRapper(const char* path, struct stat* stats) {
+  #if SYSTYPE != SYS_LINUX
+    return _stat(path, (struct _stat64i32*)stats);
+  # else
+    return lstat(path, stats);
+  #endif
+}
+
 int mapDir(const char* path, t_node** head, unsigned int maxDep) {
   /*only care if error happen of first try*/
   if (isValidFolder(path)) { return 1; }
@@ -178,7 +186,7 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
     de = readdir(dr);
     if (de) {
       snprintf(wd, PATH_MAX, "%s/%s", path, de->d_name);
-      if (lstat(wd, &stats) != 0) {
+      if (statRapper(wd, &stats) != 0) {
         perror(de->d_name);
         break ;
       }
