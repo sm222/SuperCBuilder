@@ -203,7 +203,7 @@ size_t output(int fd, const char * s, ...) {
 
 #include <time.h>
 
-# define CSBHEADERLINE " - - - - - - - - - - - - "
+# define CSBHEADERLINE " - - - - - - - - - - - - - - - "
 
 size_t scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
   time_t rawtime;
@@ -215,6 +215,7 @@ size_t scbHeader(outFileData* data, const char* comment, const char* uName, cons
   out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
   out += output(data->fd, "%s built by %s\n", comment, maker);
+  out += output(data->fd, "%s from -> %s to -> %s\n", comment, SYS_NAMES[SYSTYPE], SYS_NAMES[data->target]);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
   out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
   out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
