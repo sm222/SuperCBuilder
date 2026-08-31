@@ -74,7 +74,8 @@ simple rule for the config file, to declare value you use that syntax.
 name:value
   additional value
 ```
-if you do not add colon `:` between the name and the value, an error will be thrown. The colon is needed for the program to know which is which.  
+if you do not add colon `:` between the name and the value, an error will be thrown,  
+The colon is needed for the program to know which is which.  
 Value can have space in side of them but if the are on a new line the space will be trim.  
 In the case you want the value to start with space just add them after the name declaration.
 ```
@@ -84,9 +85,10 @@ name:   value
 
 any text under the variable name will be consider as addionnal value only if there is at least,  
 one space, form-feed `\f`, carriage return `\r`, horizontal tab `\t`, or vertical tab `\v`.  
-> If unsure use man isspace.
+> If unsure look up the function isspace in c.
 
-Otherwise it will be considered a new variable declaration. if any text is found "floating" with no other valid text above it it will throw an error.  
+Otherwise it will be considered a new variable declaration,  
+if any text is found "floating" with no other valid text above it it will throw an error.  
 
 ### valid
 ```
@@ -146,18 +148,27 @@ foo:are we building on linux?
   %_P_WINDOWS\ no
   %_P_MACOS\ \ no
 ```
-we also have the keyword `_T_LINUX` or anyother [suported os](#suported-os) to tell scb to use   
+we also have the keyword `_T_LINUX` or anyother [suported os](#suported-os) to tell scb to use.   
+```
+linux_build:                     |  ────────────────────────
+  %_T_LINUX\ \  for linux        |  |./scb --target=windows|
+  %_T_WINDOWS\  for windows      |  ────────────────────────
+                                 |              |           
+windows_build:                   |  ────────────────────────
+  %_T_LINUX\ \  for linux        |  | %_P_LINUX is true    |
+  %_T_WINDOWS\  for windows      |  ────────────────────────
+                                 |              |           
+foo:are we building on linux?    |  ────────────────────────
+  %_P_LINUX\ \ %linux_build      |  | %_T_WINDOWS is true  |
+  %_P_WINDOWS\ %windows_build    |  ────────────────────────
+  %_P_MACOS\ \ no                |                          
+```
 
 you can also change the target with the flag `-T=MACOS` or any other valid target.
 
 We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
  variable of enviroment.
 
-```
-name: %_ENV_USER
-# set variable to the user name
-
-```
 
 # reserved variable
 |  name       | default value         | about                              |
