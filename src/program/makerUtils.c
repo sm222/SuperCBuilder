@@ -664,9 +664,7 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   const size_t len = findVarLen(s);
   *dis += len + 1;
   short i = 0;
-  for ( ; keyWords[i]; i++) {
-    if (isValidKeyword(s, i)) { break ; }
-  }
+  for ( ; keyWords[i]; i++) { if (isValidKeyword(s, i)) { break ; } }
   // test system target
   if (i < NUMBER_OF_OS) { return (SYSTYPE == i ? 0 : 1); }
   else if (i < NUMBER_OF_OS * 2) {
@@ -677,8 +675,7 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     return 0;
   }
   else if (i == k_shell) {
-    if (!data->shellFt)
-      return 1;
+    if (!data->shellFt) { return 1; }
     data->shellFt(data, total);
     return 0;
   }
