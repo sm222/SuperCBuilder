@@ -126,9 +126,14 @@ typedef enum {
 # define NUMBER_OF_OS 3
 
 static const char* const keyWords[] = {
-  "LINUX",
-  "WINDOWS",
-  "MACOS",
+  "P_LINUX",
+  "P_WINDOWS",
+  "P_MACOS",
+  //
+  "T_LINUX",
+  "T_WINDOWS",
+  "T_MACOS",
+  //
   "ENV_",
   "SHELL",
   "ROOT",
@@ -149,15 +154,20 @@ static const char* const keyWords[] = {
 //* https://www.geeksforgeeks.org/c/how-do-i-create-a-library-in-c/
 
 enum {
-  k_linux   = 0,
-  k_windows = 1,
-  k_macos   = 2,
-  k_env     = 3,
-  k_shell   = 4,
-  k_root    = 5,
-  k_log     = 6,
-  k_dev     = 7,
-  k_msg     = 8,
+  k_p_linux   = 0,
+  k_p_windows = 1,
+  k_p_macos   = 2,
+  // - - - - - - -
+  k_t_linux   = 3,
+  k_t_windows = 4,
+  k_t_macos   = 5,
+  // - - - - - - -
+  k_env     = 6,
+  k_shell   = 7,
+  k_root    = 8,
+  k_log     = 9,
+  k_dev     = 10,
+  k_msg     = 11,
 };
 
 

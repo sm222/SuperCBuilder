@@ -661,15 +661,16 @@ bool isValidKeyword(const char* s, size_t i) {
 }
 
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
-  const size_t len = findVarLen(s) + 1;
-  *dis += len;
+  const size_t len = findVarLen(s);
+  *dis += len + 1;
   short i = 0;
   for ( ; keyWords[i]; i++) {
     if (isValidKeyword(s, i)) { break ; }
   }
   // test system target
-  if (i < NUMBER_OF_OS) {
-    return (data->target == i ? 0 : 1);
+  if (i < NUMBER_OF_OS) { return (SYSTYPE == i ? 0 : 1); }
+  else if (i < NUMBER_OF_OS * 2) {
+    return (data->target + NUMBER_OF_OS == i ? 0 : 1);
   }
   else if (i == k_env) {
     readEnv(data, s, total);

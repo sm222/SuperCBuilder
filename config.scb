@@ -1,6 +1,20 @@
 NAME:scb
 
-CC:gcc
+linux_comp:
+  %_T_WINDOWS\ x86_64-w64-mingw32-gcc
+  %_T_LINUX\ \ cc
+
+windows_comp:
+  %_T_LINUX\ \ cc
+  %_T_WINDOWS\ cl
+
+
+CC:
+  %_P_LINUX\ \ %linux_comp
+  %_P_MACOS\ \ cc
+  %_P_WINDOWS\ %windows_comp
+  %_LOG
+
 
 dev:
  -D DEBUG_COLOR_TRUE
@@ -16,10 +30,10 @@ default:
   -D=HELLO
 
 test:
-  %_LINUX   -D OS=LINUX
-  %_WINDOWS -D OS=WINDOWS
-  %_MACOS   -D OS=MACOS
-  %_DEFAULT -D OS=D
+  %_P_LINUX   -D OS=LINUX
+  %_P_WINDOWS -D OS=WINDOWS
+  %_P_MACOS   -D OS=MACOS
+  %_T_DEFAULT -D OS=D
 
 # if no default and no case is catch var woud be empty
 
@@ -27,8 +41,8 @@ ING:
   doc!
 
 sys:
-  %_WINDOWS %_MSG windows
-  %_MACOS %_MSG macos
+  %_T_WINDOWS %_MSG windows
+  %_T_MACOS %_MSG macos
 
 
 PROG:
@@ -41,7 +55,7 @@ DEP:
   echo foo %foo!
   echo bar %bar!
   echo baz %baz!
-  %blah!
+
 
 CLEAN:
   echo done;

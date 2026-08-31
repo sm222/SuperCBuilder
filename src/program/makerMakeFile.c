@@ -165,12 +165,12 @@ static ssize_t drawDep(outFileData* data) {
 static ssize_t drawProg(outFileData* data, const char* const compiler, const bool prog) {
   ssize_t t = 0;
   t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
-  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) $(CFLAGS) $(OBJS)", compiler, compiler);
+  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) ", compiler, compiler);
   if (prog) {
     const char* const progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);
   }
-  t += output(data->fd, " -o $(NAME)$(NAMEX)\n\n");
+  t += output(data->fd, "$(CFLAGS) $(OBJS)\n\n\n");
   return t;
 }
 
@@ -190,13 +190,9 @@ static ssize_t drawMakeRule(outFileData* data) {
   const char* const compiler = data->cpp ? "CXX" : "CC";
   t += output(data->fd, "#is cpp: %s\n\n", data->cpp ? "yes" : "no");
   t += output(data->fd, "all: ");
-  if (dep) {
-    t += output(data->fd, "dep ");
-  }
+  if (dep) { t += output(data->fd, "dep "); }
   t += output(data->fd, "$(NAME)\n\n");
-  if (prog || (!lib && !dlib)) {
-    t += drawProg(data, compiler, prog);
-  }
+  if (prog || (!lib && !dlib)) { t += drawProg(data, compiler, prog); }
   if (lib) {
     //! add lib buid here for .so or .a
     t += drawlib(data, "ar rcs");
