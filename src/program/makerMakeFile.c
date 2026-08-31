@@ -5,7 +5,7 @@
 static char* capName(const char* name) {
   static char newName[MAXPATHLEN + 20];
   size_t len = strlen(name);
-  bzero(newName, MAXPATHLEN + 20);
+  r_bzero(newName, MAXPATHLEN + 20);
   while (len--) {
     newName[len] = (char)toupper(name[len]);
   }

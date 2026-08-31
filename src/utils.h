@@ -7,6 +7,15 @@
 #  define STR_BUFF_LEN 300
 # endif
 
+enum {
+  exit_success,
+};
+
+// to make windows happy
+inline static void r_bzero(void* ptr, size_t size) {
+  memset(ptr, 0, size);
+}
+
 size_t getArrayLen(const char* const* array);
 
 char* d__strdup(const char* s);

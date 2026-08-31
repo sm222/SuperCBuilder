@@ -8,7 +8,7 @@ static t_flagValue* fv_add(int32_t flag, const char* value) {
   t_flagValue* f = calloc(1, sizeof(*f));
   if (f) {
     f->flag = flag;
-    bzero(f->name, FLAG_NAME_LEN * sizeof(char));
+    r_bzero(f->name, FLAG_NAME_LEN * sizeof(char));
     f->value = d__strdup(value);
     if (!f->value) {
       perror("calloc");

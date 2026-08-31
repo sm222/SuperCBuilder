@@ -8,7 +8,7 @@ const char* const helpList[] = {
   "--color            -c  color",                                         // 4
   "--detach           -d  detach path from root",                         // 8
   "--buildtype=[type]     set the build type to value",                   // 16
-  "--target=[system]      linux, windows, mac, etc",                      // 32
+  "--target=[system]      linux, windows, macos, etc",                    // 32
   "--info             -i  print all valid flags and keywords",            // 64
   "--dev                  add to all the the text after the keyword DEV", // 128
   0x0

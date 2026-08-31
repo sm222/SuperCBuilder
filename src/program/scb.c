@@ -1,11 +1,9 @@
 #include "scb.h"
 #include "testFlags.h"
 #include "MakerUtils.h"
-#include <sys/ioctl.h>
 #include <assert.h>
 
 
-struct winsize windowData;
 bool           OnStdout = false;
 
 size_t getLongerName(t_node* node) {
@@ -62,7 +60,7 @@ size_t putSpace(char* space, size_t max, t_node* const n, const int* colorMode) 
 t_node* printFiles(t_node* node, int tab, const int* colorMode) {
   if (!node)
     return NULL;
-  const int with = OnStdout ? (windowData.ws_col / 1.8f) : 180;
+  const int with = 60 + (tab * 4);
   const size_t space_len = getLongerName(node) + 2;
   char  space[space_len + 1];
   memset(space, ' ', space_len);
@@ -71,11 +69,6 @@ t_node* printFiles(t_node* node, int tab, const int* colorMode) {
     int total = 0;
     addLine(tab, colorMode, false);
     while (node && total < with) {
-      if (*colorMode) {
-        char cb[MAX_COLORLEN * 2 + 2];
-        sprintf(cb, "\e[4%dm \e[0m", node->data.type);
-        put_str(cb, STDOUT_FILENO, false);
-      }
       total += put_str(node->data.name, STDOUT_FILENO, false);
       total += putSpace(space, space_len, node, colorMode);
       node = node->next;
@@ -98,11 +91,7 @@ static void _printfolder(t_node* list, int tab, const int* colorMode) {
 
 
 void printfolder(t_node* list, const int colorMode) {
-  bzero(&windowData, sizeof(windowData));
-  if (isatty(STDOUT_FILENO) == 1) {
-    OnStdout = true;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowData);
-  }
+  if (isatty(STDOUT_FILENO) == 1) { OnStdout = true; }
   const int C_colormode = colorMode;
   _printfolder(list, 0, &C_colormode);
   printNl(STDOUT_FILENO);
@@ -149,9 +138,17 @@ static inline bool testDotsFiles(const char* name) {
   return (strncmp(".", name, 2) == 0 || strncmp("..", name, 3) == 0);
 }
 
+//extractVar
 static const char* ignore = NULL;
 
-//extractVar
+static int statRap(const char* path, void* stats) {
+  #if SYSTYPE != SYS_LINUX
+  return _stat(path, stats);
+  #else
+    return lstat(path, stats);
+  #endif
+}
+
 
 int mapDir(const char* path, t_node** head, unsigned int maxDep) {
   /*only care if error happen of first try*/
@@ -164,13 +161,17 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
     fprintf(stderr, "scb: can't open or read %s\n", path);
     return 1;
   }
-  struct stat stats;
+  #if SYSTYPE != SYS_LINUX
+    struct _stat64i32 stats;
+  #else
+    struct stat stats;
+  #endif
   char wd[PATH_MAX + 1];
   do {
     de = readdir(dr);
     if (de) {
       snprintf(wd, PATH_MAX, "%s/%s", path, de->d_name);
-      if (lstat(wd, &stats) != 0) {
+      if (statRap(wd, &stats) != 0) {
         perror(de->d_name);
         break ;
       }
@@ -215,7 +216,7 @@ static int grabAv(t_SCB* setting, int avSize) {
 }
 
 static int setup(t_SCB* setting, void* mainData) {
-  bzero(setting, sizeof(*setting));
+  r_bzero(setting, sizeof(*setting));
   setting->mainData = mainData;
   if (getcwd(setting->originPath, PATH_MAX) != setting->originPath) {
     perror("getcwd");

@@ -170,7 +170,7 @@ char* get_next_line(int fd) {
     return (NULL);
   t_val.rv = 0;
   while (ft_find_nl(book) == '0') {
-    bzero(t_val.readtmp, BUFFER_SIZE + 1);
+    r_bzero(t_val.readtmp, BUFFER_SIZE + 1);
     t_val.rv = read(fd, t_val.readtmp, BUFFER_SIZE);
     if (t_val.rv <= 0)
       break ;
@@ -203,7 +203,7 @@ size_t output(int fd, const char * s, ...) {
 
 #include <time.h>
 
-# define CSBHEADERLINE " - - - - - - - - - - - - "
+# define CSBHEADERLINE " - - - - - - - - - - - - - - - "
 
 size_t scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
   time_t rawtime;
@@ -214,6 +214,7 @@ size_t scbHeader(outFileData* data, const char* comment, const char* uName, cons
   size_t out = 0;
   out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
+  out += output(data->fd, "%s from -> %s to -> %s\n", comment, SYS_NAMES[SYSTYPE], SYS_NAMES[data->target]);
   out += output(data->fd, "%s built by %s\n", comment, maker);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
   out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
@@ -235,7 +236,7 @@ static int getTarget(t_SCB* scb) {
 
 outFileData makerSetup(t_SCB* in, int mode) {
   outFileData data;
-  bzero(&data, sizeof(data));
+  r_bzero(&data, sizeof(data));
   data.var.size = (sizeof(reservedVarNames) / sizeof(char*)) - 1;
   data.scb = in;
   data.outputType = mode;
@@ -404,7 +405,7 @@ int openConfigFile(outFileData* data, bool preopen) {
     perror(name);
     return 1;
   }
-  fprintf(stderr, "path -> %s/%s\n", root, data->configFile.name);
+  fprintf(stderr, "config file path -> %s/%s\n", root, data->configFile.name);
   return readConfigFile(&data->configFile);
 }
 
@@ -795,7 +796,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
 
 //* return value from file or default value
 const char* readVariableName(outFileData* data, e_reservedVarNames name) {
-  bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
+  r_bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
   size_t i = 0;
   ssize_t curentLen = 0;
   const size_t len = strlen(reservedVarNames[name]);
