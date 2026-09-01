@@ -42,9 +42,6 @@ size_t addLine(int tab, const int* colorMode, int mode) {
   }
   if (wasTab) { total += snprintf(line + total, size - total, "\e[0m"); }
   write(STDOUT_FILENO, line, total);
-  # ifdef DEBUG_COLOR_TRUE
-  assert(*colorMode == 1);
-  # endif
   return total;
 }
 
@@ -142,10 +139,10 @@ static inline bool testDotsFiles(const char* name) {
 static const char* ignore = NULL;
 
 static int statRap(const char* path, void* stats) {
-  #if SYSTYPE != SYS_LINUX
-  return _stat(path, stats);
+  #if SYSTYPE != SYS_WIN
+  return lstat(path, stats);
   #else
-    return lstat(path, stats);
+  return _stat(path, stats);
   #endif
 }
 
@@ -161,10 +158,10 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
     fprintf(stderr, "scb: can't open or read %s\n", path);
     return 1;
   }
-  #if SYSTYPE != SYS_LINUX
-    struct _stat64i32 stats;
-  #else
+  #if SYSTYPE != SYS_WIN
     struct stat stats;
+    #else
+    struct _stat64i32 stats;
   #endif
   char wd[PATH_MAX + 1];
   do {

@@ -1,18 +1,18 @@
 NAME:scb
 
-linux_comp:
-  %_T_WINDOWS\ x86_64-w64-mingw32-gcc
+LINUX_COMP:
+  %_T_WINDOWS\ \ x86_64-w64-mingw32-gcc
   %_T_LINUX\ \ cc
 
-windows_comp:
+WINDOWS_COMP:
   %_T_LINUX\ \ cc
   %_T_WINDOWS\ cl
 
 
 CC:
-  %_P_LINUX\ \ %linux_comp
+  %_P_LINUX\ \ %LINUX_COMP
   %_P_MACOS\ \ cc
-  %_P_WINDOWS\ %windows_comp
+  %_P_WINDOWS\ %WINDOWS_COMP
   %_LOG
 
 
@@ -52,9 +52,9 @@ PROG:
 
 
 DEP:
-  echo foo %foo!
-  echo bar %bar!
-  echo baz %baz!
+  echo foo %foo %_ROOT\ !
+  echo bar %bar %_ROOT\ !
+  echo baz %baz %_ROOT\ !
 
 
 CLEAN:

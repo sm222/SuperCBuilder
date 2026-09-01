@@ -165,12 +165,12 @@ static ssize_t drawDep(outFileData* data) {
 static ssize_t drawProg(outFileData* data, const char* const compiler, const bool prog) {
   ssize_t t = 0;
   t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
-  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) ", compiler, compiler);
+  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) $(CFLAGS) $(OBJS) ", compiler, compiler);
   if (prog) {
     const char* const progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);
   }
-  t += output(data->fd, "$(CFLAGS) $(OBJS)\n\n\n");
+  t += output(data->fd, "\n\n");
   return t;
 }
 
@@ -222,7 +222,7 @@ static ssize_t drawClean(outFileData* data) {
 static ssize_t drawEnd(outFileData* data) {
   ssize_t t = 0;
   const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
-  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n\n");
+  t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n");
   if (isVarInConfig(Vclean, data->var))
     t += drawClean(data);
   t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);

@@ -335,24 +335,84 @@ static const char* const defaultFile[] = {
   0x0
 };
 
-static bool makeDefaultConfigFile(outFileData* data) {
-  const int fd = open("defaultConfigFile.scb", O_CREAT | O_TRUNC | O_RDWR, 0644);
-  if (!fd) {
+static const char* const crossplatform[] = {
+  "",
+  "# comp rules",
+  "LINUX_COMP:",
+  "  %_T_LINUX\\ \\ cc",
+  "  %_T_WINDOWS\\ add c c/c++ comp",
+  "  %_T_MACOS\\ \\ add c c/c++ comp",
+  "",
+  "WINDOWS_COMP:",
+  "  %_T_LINUX\\ \\ add c c/c++ comp",
+  "  %_T_WINDOWS\\ cl",
+  "  %_T_MACOS\\ \\ add c c/c++ comp",
+  "",
+  "MACOS_COMP:",
+  "  %_T_LINUX\\ \\ add c c/c++ comp",
+  "  %_T_WINDOWS\\ add c c/c++ comp",
+  "  %_T_MACOS\\ \\ cc",
+  "",
+  "CC:",
+  "  %_P_LINUX\\ \\ %LINUX_COMP",
+  "  %_P_MACOS\\ \\ %MACOS_COMP",
+  "  %_P_WINDOWS\\ %WINDOWS_COMP",
+  "  %_LOG",
+  "",
+  "CXX:",
+  "  %_P_LINUX\\ \\ %LINUX_COMP",
+  "  %_P_MACOS\\ \\ %MACOS_COMP",
+  "  %_P_WINDOWS\\ %WINDOWS_COMP",
+  "",
+  "CFLAGS:   add c   flag",
+  "CXXFLAGS: add c++ flag",
+  "",
+  "dev:",
+  "  devflags",
+  "\n\n\n",
+  "# buid program",
+  "#PROG: add flags or lib",
+  "# buid lib (.a file)",
+  "#LIB:  add flags or lib",
+  "# buid lib (.so file)",
+  "#DLIB: add flags or lib",
+  0x0
+};
+
+typedef enum {
+  cf_simple,
+  cf_crossplatform,
+  cf_invalid,
+} configFileFab;
+
+static bool makeDefaultConfigFile(outFileData* data, configFileFab fab) {
+  if ((int)fab < 0 || (int)fab >= cf_invalid) {
+    fprintf(stderr, "invalid choice\n");
+    return false;
+  }
+  const int fd = open("ConfigFile.scb", O_CREAT | O_TRUNC | O_RDWR, 0644);
+  if (fd <= 0) {
     fprintf(stderr, "scb: failed to create default config file %s\n", strerror(errno));
     return false;
   }
   //! add safety later
   const char* name = strrchr(data->scb->path, FILE_SEP) + 1;
   output(fd, "NAME:%s\n", name);
-  for (size_t i = 0; defaultFile[i]; i++) {
-    output(fd, "%s\n", defaultFile[i]);
+  const char* const* print = 0x0;
+  switch ((int)fab) {
+  case cf_simple:
+    print = defaultFile;
+    break ;
+  case cf_crossplatform:
+    print = crossplatform;
+    break ;
   }
-  for (size_t i = 0; reservedVarNames[i]; i++) {
-    output(fd, "#  %s:\n", reservedVarNames[i]);
+  for (size_t i = 0; print[i]; i++) {
+    output(fd, "%s\n", print[i]);
   }
   output(fd, "#\n");
   close(fd);
-  printf("default config file generated\n");
+  printf("config file generated\n");
   return true;
 }
 
@@ -360,8 +420,11 @@ static int makeChoiseNoConfigFile(char response, outFileData* data) {
   if (response == 'c') {
     return 0;
   }
-  else if (response == 'm') {
-    makeDefaultConfigFile(data);
+  else if (response == 'g') {
+    fprintf(stdout, "0: default\n1:cross platform\n");
+    const char* res = dialogBox("what type of file?", "[number]", 2);
+    const int n = atoi(res);
+    makeDefaultConfigFile(data, n);
     return 1;
   }
   return 1;
@@ -661,8 +724,8 @@ bool isValidKeyword(const char* s, size_t i) {
 }
 
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
-  const size_t len = findVarLen(s);
-  *dis += len + 1;
+  const size_t len = findVarLen(s) - 1;
+  *dis += len;
   short i = 0;
   for ( ; keyWords[i]; i++) { if (isValidKeyword(s, i)) { break ; } }
   // test system target
@@ -682,9 +745,12 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   else if (i == k_root) {
     const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
     addTo(data->configFile.buffer, path, total);
-    addToc(data->configFile.buffer, FILE_SEP, (*total)++);
+    addToc(data->configFile.buffer, FILE_SEP, (*total));
+    (*total)++;
   }
-  else if (i == k_log) { fprintf(stderr, "info:%s\n", data->configFile.buffer); }
+  else if (i == k_log) {
+    fprintf(stderr, "[%3.zu]info:%s|\n", *total, data->configFile.buffer);
+  }
   else if (i == k_dev) {
     const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
     return !isDevMode; // read rest of line if dev mode

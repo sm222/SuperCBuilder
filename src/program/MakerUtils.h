@@ -12,13 +12,13 @@
 # define ENDL(c)    ((c == '\n') || (c == '\0'))
 
 # define TOKENSIZE 1
-# define TOKENS_LIST "\\%;"
+# define TOKENS_LIST "\\%!"
 
 # define NO_CONFIG_FILE \
 "no config file found, do you want to generate one?"
 
 # define CONFIG_FILE_QUESTION \
-"[c] continue | [m] generate config file | else stop"
+"[c] continue | [g] generate config file | else stop"
 
 # define WITCH_FILE \
 "multiple config were files found, select which one should be used :"
@@ -139,7 +139,6 @@ static const char* const keyWords[] = {
   "ROOT",
   "LOG",
   "DEV",
-  "MSG",
   0x0,
 };
 
@@ -167,7 +166,6 @@ enum {
   k_root      = 8,
   k_log       = 9,
   k_dev       = 10,
-  k_msg       = 11,
 };
 
 
