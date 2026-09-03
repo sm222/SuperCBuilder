@@ -786,6 +786,7 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
     case '\\':
     case '%':
     case ';':
+    case '!':
       toAdd = t;
       break ;
     case 'n':

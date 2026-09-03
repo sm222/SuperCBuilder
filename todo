@@ -14,9 +14,9 @@ configfile --
 [ ]make better file promp choise
 
 work in progress --
-[-]clean code,
+[/]clean code,
 [-]add cmake output
-[-]add maxdept
+[/]add maxdept
 
 
 done --

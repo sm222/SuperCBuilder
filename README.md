@@ -18,7 +18,7 @@ It has enough settings to be versatile but tries to avoid overengeneering, Minim
 - [special thanks](#special-thanks)
 
 
-# how to use
+## how to use
 If you just clone the project you can run `compile.sh` for initial setup. after that you can do `./scb .`  
 and it gona build a makefile for it self.
 ```
@@ -32,7 +32,7 @@ $scb {path} [build system name]
 ```
 By default if no build system is provided scb will use makefile.
 
-# syntaxe
+## syntaxe
 ### valid
 ```
 name:value
@@ -65,7 +65,7 @@ name: value #comment
 In the last case the comment will be in the value,  
 scb only take the comment in consideration if the `#` is the first character on the line.
 
-# variable declaration
+## variable declaration
 the sine `#` is used for comment, but it need to be the first character of the line to be valid.  
 
 simple rule for the config file, to declare value you use that syntax.  
@@ -151,7 +151,7 @@ foo:are we building on linux?
 we also have the keyword `_T_LINUX` or anyother [suported os](#suported-os) to tell scb to use.   
 ```
 linux_build:                     |  ────────────────────────
-  %_T_LINUX\ \  for linux        |  |./scb --target=windows|
+  %_T_LINUX\ \  for linux        |  | scb --target=windows |
   %_T_WINDOWS\  for windows      |  ────────────────────────
                                  |              |           
 windows_build:                   |  ────────────────────────
@@ -170,7 +170,7 @@ We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
  variable of enviroment.
 
 
-# reserved variable
+## reserved variable
 |  name       | default value         | about                              |
 |-------------| --------------------- |------------------------------------|
 |**CC**       | cc                    |c compiler                          |
@@ -188,7 +188,7 @@ We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
 
 > if prog or lib is not in the config file, scb will make a program by default.
 
-# keyword
+## keyword
 |  name           | action                                                   |
 |-------------    | ---------------------                                    |
 |**_P_LINUX**     |only reads the rest of the line if the system is linux    |
@@ -204,7 +204,7 @@ We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
 |**_LOG**         |print on std-error the variable as is                     |
 |**_MSG**         |not valid yet working on it                               |
 
-# suported os
+## suported os
 
 | name    | suport           | keyword |
 | ------- | ------           | ------- |
@@ -212,7 +212,7 @@ We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
 | WINDOWS | not tested       |  yes    |
 | MACOS   | not tested       |  yes    |
 
-# suported build system and scrips language
+## suported build system and scrips language
 
 |  name      | type         | support |
 | ---------- | ------------ | ------- |
@@ -225,5 +225,5 @@ We can also use the keyword `_ENV_{NAME}` to set a variable to the value of a
 | **zig**    | scripting    | **0%**  |
 
 
-## special thanks
+### special thanks
   - [lord](https://github.com/loyc12)
