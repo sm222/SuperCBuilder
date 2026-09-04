@@ -1,4 +1,3 @@
-
 param --
 [ ]debug flag
 
@@ -6,8 +5,6 @@ param --
 code base --
 [ ]better doc
 [ ]add to doc variable the way the are read
-[ ]optimise color output
-   > remove adding color for other block
 
 outfile -- 
 [ ]add shell
@@ -15,17 +12,22 @@ outfile --
 configfile --
 [ ]look for dup name in user var
 [ ]make better file promp choise
-[ ]keyword log?
-
 
 work in progress --
-[-]clean code,
+[/]clean code,
 [-]add cmake output
-[-]add maxdept
-
+[/]add maxdept
 
 
 done --
+[x]fix env keyword
+[x]add keyword log
+[x]add keyword dev
+[x]add keyword msg
+[x]fix bug with continue with no config file
+[-] Tue 23 Jun 2026
+[x]add color prefix for color mode
+[x]fix render bug for color mode '-c'
 [-] Sat 20 Jun 2026
 [x]add safety for 'mapDir'
 [x]redo the print system, more readable and try to use all the screen

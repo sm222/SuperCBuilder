@@ -1,46 +1,61 @@
 NAME:scb
-CC:gcc
 
-#debug:-g
+LINUX_COMP:
+  %_T_WINDOWS\ \ x86_64-w64-mingw32-gcc
+  %_T_LINUX\ \ cc
+
+WINDOWS_COMP:
+  %_T_LINUX\ \ cc
+  %_T_WINDOWS\ cl
+
+
+CC:
+  %_P_LINUX\ \ %LINUX_COMP
+  %_P_MACOS\ \ cc
+  %_P_WINDOWS\ %WINDOWS_COMP
+  %_LOG
+
+
+dev:
+ -D DEBUG_COLOR_TRUE
+
+
+debug:-g
 
 CFLAGS:
   -Wall -Werror -Wextra 
-  %debug 
+  %debug %_LOG 
 
 default:
   -D=HELLO
 
 test:
-  %_LINUX   -D OS=LINUX
-  %_WINDOWS -D OS=WINDOWS
-  %_MAC     -D OS=MACOS
-  %_DEFAULT -D OS=D
+  %_P_LINUX   -D OS=LINUX
+  %_P_WINDOWS -D OS=WINDOWS
+  %_P_MACOS   -D OS=MACOS
+  %_T_DEFAULT -D OS=D
 
 # if no default and no case is catch var woud be empty
-foo:A
-bar:B
-  %baz
-baz:C
-  %foo\wd
-  %test
-  %_ROOT
 
 ING:
   doc!
-PROG:
-  %debug 
-  %default 
 
 sys:
-  %_LINUX linux heh 
-  %_WINDOWS B
-  %_MACOS C
+  %_T_WINDOWS %_MSG windows
+  %_T_MACOS %_MSG macos
+
+
+PROG:
+  %sys
+  %debug 
+  %default %_LOG
+
 
 DEP:
-  echo foo %foo!
-  echo bar %bar!
-  echo baz %baz!
-  %blah!
+  echo foo %foo %_ROOT\ !
+  echo bar %bar %_ROOT\ !
+  echo baz %baz %_ROOT\ !
+
 
 CLEAN:
   echo done;

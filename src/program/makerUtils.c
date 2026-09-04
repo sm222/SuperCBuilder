@@ -170,7 +170,7 @@ char* get_next_line(int fd) {
     return (NULL);
   t_val.rv = 0;
   while (ft_find_nl(book) == '0') {
-    bzero(t_val.readtmp, BUFFER_SIZE + 1);
+    r_bzero(t_val.readtmp, BUFFER_SIZE + 1);
     t_val.rv = read(fd, t_val.readtmp, BUFFER_SIZE);
     if (t_val.rv <= 0)
       break ;
@@ -203,7 +203,7 @@ size_t output(int fd, const char * s, ...) {
 
 #include <time.h>
 
-# define CSBHEADERLINE " - - - - - - - - - - - - "
+# define CSBHEADERLINE " - - - - - - - - - - - - - - - "
 
 size_t scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
   time_t rawtime;
@@ -214,6 +214,7 @@ size_t scbHeader(outFileData* data, const char* comment, const char* uName, cons
   size_t out = 0;
   out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
+  out += output(data->fd, "%s from -> %s to -> %s\n", comment, SYS_NAMES[SYSTYPE], SYS_NAMES[data->target]);
   out += output(data->fd, "%s built by %s\n", comment, maker);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
   out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
@@ -235,7 +236,7 @@ static int getTarget(t_SCB* scb) {
 
 outFileData makerSetup(t_SCB* in, int mode) {
   outFileData data;
-  bzero(&data, sizeof(data));
+  r_bzero(&data, sizeof(data));
   data.var.size = (sizeof(reservedVarNames) / sizeof(char*)) - 1;
   data.scb = in;
   data.outputType = mode;
@@ -334,24 +335,84 @@ static const char* const defaultFile[] = {
   0x0
 };
 
-static bool makeDefaultConfigFile(outFileData* data) {
-  const int fd = open("defaultConfigFile.scb", O_CREAT | O_TRUNC | O_RDWR, 0644);
-  if (!fd) {
+static const char* const crossplatform[] = {
+  "",
+  "# comp rules",
+  "LINUX_COMP:",
+  "  %_T_LINUX\\ \\ cc",
+  "  %_T_WINDOWS\\ add c c/c++ comp",
+  "  %_T_MACOS\\ \\ add c c/c++ comp",
+  "",
+  "WINDOWS_COMP:",
+  "  %_T_LINUX\\ \\ add c c/c++ comp",
+  "  %_T_WINDOWS\\ cl",
+  "  %_T_MACOS\\ \\ add c c/c++ comp",
+  "",
+  "MACOS_COMP:",
+  "  %_T_LINUX\\ \\ add c c/c++ comp",
+  "  %_T_WINDOWS\\ add c c/c++ comp",
+  "  %_T_MACOS\\ \\ cc",
+  "",
+  "CC:",
+  "  %_P_LINUX\\ \\ %LINUX_COMP",
+  "  %_P_MACOS\\ \\ %MACOS_COMP",
+  "  %_P_WINDOWS\\ %WINDOWS_COMP",
+  "  %_LOG",
+  "",
+  "CXX:",
+  "  %_P_LINUX\\ \\ %LINUX_COMP",
+  "  %_P_MACOS\\ \\ %MACOS_COMP",
+  "  %_P_WINDOWS\\ %WINDOWS_COMP",
+  "",
+  "CFLAGS:   add c   flag",
+  "CXXFLAGS: add c++ flag",
+  "",
+  "dev:",
+  "  devflags",
+  "\n\n\n",
+  "# buid program",
+  "#PROG: add flags or lib",
+  "# buid lib (.a file)",
+  "#LIB:  add flags or lib",
+  "# buid lib (.so file)",
+  "#DLIB: add flags or lib",
+  0x0
+};
+
+typedef enum {
+  cf_simple,
+  cf_crossplatform,
+  cf_invalid,
+} configFileFab;
+
+static bool makeDefaultConfigFile(outFileData* data, configFileFab fab) {
+  if ((int)fab < 0 || (int)fab >= cf_invalid) {
+    fprintf(stderr, "invalid choice\n");
+    return false;
+  }
+  const int fd = open("ConfigFile.scb", O_CREAT | O_TRUNC | O_RDWR, 0644);
+  if (fd <= 0) {
     fprintf(stderr, "scb: failed to create default config file %s\n", strerror(errno));
     return false;
   }
   //! add safety later
   const char* name = strrchr(data->scb->path, FILE_SEP) + 1;
   output(fd, "NAME:%s\n", name);
-  for (size_t i = 0; defaultFile[i]; i++) {
-    output(fd, "%s\n", defaultFile[i]);
+  const char* const* print = 0x0;
+  switch ((int)fab) {
+  case cf_simple:
+    print = defaultFile;
+    break ;
+  case cf_crossplatform:
+    print = crossplatform;
+    break ;
   }
-  for (size_t i = 0; reservedVarNames[i]; i++) {
-    output(fd, "#  %s:\n", reservedVarNames[i]);
+  for (size_t i = 0; print[i]; i++) {
+    output(fd, "%s\n", print[i]);
   }
   output(fd, "#\n");
   close(fd);
-  printf("default config file generated\n");
+  printf("config file generated\n");
   return true;
 }
 
@@ -359,8 +420,11 @@ static int makeChoiseNoConfigFile(char response, outFileData* data) {
   if (response == 'c') {
     return 0;
   }
-  else if (response == 'm') {
-    makeDefaultConfigFile(data);
+  else if (response == 'g') {
+    fprintf(stdout, "0: default\n1:cross platform\n");
+    const char* res = dialogBox("what type of file?", "[number]", 2);
+    const int n = atoi(res);
+    makeDefaultConfigFile(data, n);
     return 1;
   }
   return 1;
@@ -404,7 +468,7 @@ int openConfigFile(outFileData* data, bool preopen) {
     perror(name);
     return 1;
   }
-  fprintf(stderr, "path -> %s/%s\n", root, data->configFile.name);
+  fprintf(stderr, "config file path -> %s/%s\n", root, data->configFile.name);
   return readConfigFile(&data->configFile);
 }
 
@@ -430,10 +494,10 @@ void printVar(outFileData* data) {
 }
 
 int removeEndlP(char* value, size_t p) {
-  if (!value)
+  if (!value || p < 1)
     return 0;
-  if (value[p] == '\n') {
-    value[p] = 0;
+  if (value[p - 1] == '\n') {
+    value[p - 1] = 0;
     return 1;
   }
   return 0;
@@ -442,10 +506,12 @@ int removeEndlP(char* value, size_t p) {
 int removeEndl(char* value) {
   if (!value)
     return 0;
-  size_t l = strlen(value) - 1;
-  if (value[l] == '\n') {
-    value[l] = 0;
-    return 1;
+  ssize_t l = strlen(value);
+  for (; l >= 0; l--) {
+    if (value[l] == '\n') {
+      value[l] = 0;
+      return 1;
+    }
   }
   return 0;
 }
@@ -503,7 +569,7 @@ static bool isVar(const char* line, const char* varName, size_t l) {
 
 ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
   const size_t len = strlen(line);
-  if (MAX_VAR_NAME_LEN - *curentLen + len <= 0) {
+  if (MAX_VAR_NAME_LEN - (int)(*curentLen) + (int)len < 0) {
     fprintf(stderr, "scb: var name is too long\n");
     return 0;
   }
@@ -513,8 +579,9 @@ ssize_t addTo(char* to, const char* line, ssize_t* curentLen) {
 }
 
 ssize_t addToc(char* to, char c, size_t curentLen) {
-  if (MAX_VAR_NAME_LEN - curentLen <= 0) {
+  if (MAX_VAR_NAME_LEN - (int)curentLen < 0) {
     fprintf(stderr, "scb: var is too long\n");
+    to[curentLen] = 0;
     return 0;
   }
   to[curentLen] = c;
@@ -543,10 +610,11 @@ static inline int isTokens(int c) {
 
 static inline ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
-  while (s[i] && \
-  !isspace(s[i]) && \
-  isalnum(s[i]) && \
-  !isTokens(s[i]))
+  while ((s[i] && \
+    !isspace(s[i]) && \
+    isalnum(s[i]) && \
+    !isTokens(s[i])) \
+    || s[i] == '_')
   { i++; }
   return i;
 }
@@ -622,13 +690,19 @@ int checkIfFileValid(outFileData* data) {
   return 0;
 }
 
+static size_t getEnvNameLen(const char* s) {
+  size_t i = 0;
+  while (!isspace(s[i])) { i++; }
+  return i;
+}
+
 static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   size_t i = 0;
   if (!data->scb->mainData->env)
     return ;
   const char* const* env = data->scb->mainData->env;
   s += 4;
-  const size_t varLen = findVarLen(s);
+  const size_t varLen = getEnvNameLen(s);
   while (env[i]) {
     if (strncmp(env[i], s, varLen) == 0 && env[i][varLen] == '=') {
       addTo(data->configFile.buffer, env[i] + varLen + TOKENSIZE, total);
@@ -638,32 +712,51 @@ static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   }
 }
 
+bool isValidKeyword(const char* s, size_t i) {
+  const size_t keywordLen = strlen(keyWords[i]);
+  if (strncmp(s, keyWords[i], keywordLen) == 0) {
+    if (i == k_env) { return true; }
+    else {
+      return isspace(s[keywordLen]) || isTokens(s[keywordLen]);
+    }
+  }
+  return false;
+}
+
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
-  const size_t len = findVarLen(s);
+  const size_t len = findVarLen(s) - 1;
   *dis += len;
   short i = 0;
-  for ( ; keyWords[i]; i++) {
-    if (strncmp(s, keyWords[i], len) == 0) { break ; }
-  }
+  for ( ; keyWords[i]; i++) { if (isValidKeyword(s, i)) { break ; } }
   // test system target
-  if (i <= NUMBER_OF_OS - 1) {
-    return !(data->target == i);
+  if (i < NUMBER_OF_OS) { return (SYSTYPE == i ? 0 : 1); }
+  else if (i < NUMBER_OF_OS * 2) {
+    return (data->target + NUMBER_OF_OS == i ? 0 : 1);
   }
-  if (i == k_env) {
+  else if (i == k_env) {
     readEnv(data, s, total);
-    *dis += strlen("_SHELL");
     return 0;
   }
-  if (i == k_shell) {
-    if (!data->shellFt)
-      return 1;
+  else if (i == k_shell) {
+    if (!data->shellFt) { return 1; }
     data->shellFt(data, total);
     return 0;
   }
-  if (i == k_root) {
+  else if (i == k_root) {
     const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
     addTo(data->configFile.buffer, path, total);
-    addToc(data->configFile.buffer, FILE_SEP, (*total)++);
+    addToc(data->configFile.buffer, FILE_SEP, (*total));
+    (*total)++;
+  }
+  else if (i == k_log) {
+    fprintf(stderr, "[%3.zu]info:%s|\n", *total, data->configFile.buffer);
+  }
+  else if (i == k_dev) {
+    const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
+    return !isDevMode; // read rest of line if dev mode
+  } else {
+    fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
+    return 1;
   }
   return 0;
 }
@@ -693,6 +786,7 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
     case '\\':
     case '%':
     case ';':
+    case '!':
       toAdd = t;
       break ;
     case 'n':
@@ -704,13 +798,16 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
     default:
       fprintf(stderr, "%s: line %zu unknown token ascii[%d]\\%c replace by space\n", warning, ++i , t, t);
   }
-  addToc(data->configFile.buffer, toAdd, (*total)++);
-  return 1;
+  return addToc(data->configFile.buffer, toAdd, (*total)++);
 }
 
+# define MAX_RECRSIVE_DEP 2000
+static int recursiveDep = 0;
+
 static size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
-  if (*total >= MAX_VAR_NAME_LEN)
+  if ((int)(*total) > MAX_VAR_NAME_LEN || recursiveDep == MAX_RECRSIVE_DEP)
     return 0;
+  recursiveDep++;
   size_t i = 0;
   const char* line = NULL;
   const size_t nameLen = findVarLen(name);
@@ -741,7 +838,8 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
         j += 2;
       }
       else {
-        addToc(data->configFile.buffer, line[j], (*total)++);
+        addToc(data->configFile.buffer, line[j], (*total));
+        (*total)++;
         j++;
       }
     }
@@ -750,7 +848,8 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       addTo(data->configFile.buffer, data->shellEnd, total);
       data->shellEnd[0] = 0;
     }
-    line = data->configFile.rawData[++i];
+    line = data->configFile.rawData[i] ? data->configFile.rawData[i + 1] : NULL;
+    i++;
     if (isLineValid(line) == L_varValue) {
       j = skipWhiteSpace(line, 0);
       nlValid = true;
@@ -761,11 +860,12 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
 
 
 //* return value from file or default value
-char* readVariableName(outFileData* data, e_reservedVarNames name) {
-  bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
+const char* readVariableName(outFileData* data, e_reservedVarNames name) {
+  r_bzero(data->configFile.buffer, MAX_VAR_NAME_LEN);
   size_t i = 0;
   ssize_t curentLen = 0;
   const size_t len = strlen(reservedVarNames[name]);
+  recursiveDep = 0;
   if (isVarInConfig(name, data->var)) {
     while (data->configFile.rawData[i]) {
       if (isVar(data->configFile.rawData[i], reservedVarNames[name], len)) {
@@ -779,7 +879,7 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
     //! undefined behavior if you call a: abc %CC
     //! wonder if a = "" if cc not set
     //* safe because default value don't have token
-    const size_t valueLen = strlen(reserveVarNameDefaultValue[name]);
+    const size_t valueLen = strlen(reserveVarNameDefaultValue[name]) + 1;
     memcpy(data->configFile.buffer, reserveVarNameDefaultValue[name], valueLen);
   }
   return data->configFile.buffer;
@@ -787,39 +887,35 @@ char* readVariableName(outFileData* data, e_reservedVarNames name) {
 
 
 inline int isVarInConfig(int var, t_reserveVar varList) {
+  if (var > (int)varList.size)
+    return false;
   return varList.varValue[var];
 }
 
-int makerStart(outFileData* data, const char* file) {
-  if (data->isOpen)
-    return 0;
+int makerStart(outFileData* data) {
   int error = 0;
-  if (file) {
-    data->configFile.name = (char*)file;
+  if (data->isOpen) { return 0; }
+  const int nbConfigFile = printConfigFiles(data->scb->node);
+  if (!nbConfigFile) {
+  const char* r =  \
+  dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 2);
+    if (makeChoiseNoConfigFile(r[0], data)) {
+      fprintf(stderr, "scb: stop\n");
+      return 1;
+    } else { return 0; } // continue case
+  } else if (nbConfigFile == 1) {
+    printf("config file found\n");
+    data->configFile.name = getConfigName(data, 1);
   }
   else {
-    const int nbConfigFile = printConfigFiles(data->scb->node);
-    if (!nbConfigFile) {
-      const char* r =  \
-      dialogBox(NO_CONFIG_FILE, CONFIG_FILE_QUESTION, 2);
-      if (makeChoiseNoConfigFile(r[0], data)) {
-        fprintf(stderr, "scb: stop\n");
-        return 1;
-      }
-    } else if (nbConfigFile == 1) {
-      printf("config file found\n");
-      data->configFile.name = getConfigName(data, 1);
+    const char* r = dialogBox(WITCH_FILE, "[number]", 2);
+    const int n = atoi(r);
+    if (n == 0 || n > nbConfigFile) {
+      error += 1;
+      const int rLen = strlen(r); //rm nl at the end
+      fprintf(stderr, "scb: %.*s invalid value\n", rLen - 1, r);
     }
-    else {
-      const char* r = dialogBox(WITCH_FILE, "[number]", 2);
-      const int n = atoi(r);
-      if (n == 0 || n > nbConfigFile) {
-        error += 1;
-        const int rLen = strlen(r); //rm nl at the end
-        fprintf(stderr, "scb: %.*s invalid value\n", rLen - 1, r);
-      }
-      data->configFile.name = getConfigName(data, n);
-    }
+    data->configFile.name = getConfigName(data, n);
   }
   error += openConfigFile(data, false);
   return error;

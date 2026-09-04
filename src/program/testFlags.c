@@ -5,13 +5,18 @@
 
 const char* const helpList[] = {
   "--help             -h  print this message",
-  "--color            -c  color",                             // 4
-  "--detach           -d  detach path from root",             // 8
-  "--buildtype=[type]     set the build type to value",       // 16
-  "--target=[system]      linux, windows, mac, etc",          // 32
-  "--info             -i  print all valid flags and keywords",// 64
+  "--color            -c  color",                                         // 4
+  "--detach           -d  detach path from root",                         // 8
+  "--buildtype=[type]     set the build type to value",                   // 16
+  "--target=[system]      linux, windows, macos, etc",                    // 32
+  "--info             -i  print all valid flags and keywords",            // 64
+  "--dev                  add to all the the text after the keyword DEV", // 128
   0x0
 };
+
+inline static void toggleFlag(t_settings* data, int32_t flag) {
+  set_byte(&data->flags, flag, true);
+}
 
 static void printHelp(void) {
   for (size_t i = 0; helpList[i]; i++) {
@@ -41,9 +46,10 @@ static void printKeyword(void) {
   for (size_t i = 0; keyWords[i]; i++) {
     const char* l = "          ";
     const int nlen = strlen(keyWords[i]);
-    if (len >= 40) {
+    if (len >= 45) {
       len = 0;
-      l = "\n";
+      if (keyWords[i + 1])
+        l = "\n";
     }
     len += printf("%s%.*s", keyWords[i], maxlen - nlen, l);
   }
@@ -99,20 +105,22 @@ int   testDouble(void* data) {
   int error = 0;
   const char* value = castData->av[castData->current] + 2;
   if (strncmp("detach", value, strlen("detach") + 1) == 0) {
-    set_byte(&castData->flags, flags_detach, true);
+    toggleFlag(castData, flags_detach);
   }
   else if (strncmp("help", value, 5) == 0) {
     printHelp();
     return 1;
   }
   else if (strncmp("buildtype=", value, 10) == 0) {
-    set_byte(&castData->flags, flags_set_type, true);
+    toggleFlag(castData, flags_set_type);
     error = fv_add_last(&castData->flagValue, flags_set_type, value + 10);
     error = error < 0 ? error * -1 : error;
   }
   else if (strncmp("target=", value, 7) == 0) {
-    set_byte(&castData->flags, flags_target, true);
+    toggleFlag(castData, flags_target);
     fv_add_last(&castData->flagValue, flags_target, value + 7);
+  } else if (strncmp("dev", value, 4) == 0) {
+    toggleFlag(castData, flags_dev);
   } else {
     error = 1;
     fprintf(stderr, "scb: unknow flag %s\n", castData->av[castData->current]);

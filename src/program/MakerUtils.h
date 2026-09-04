@@ -12,13 +12,13 @@
 # define ENDL(c)    ((c == '\n') || (c == '\0'))
 
 # define TOKENSIZE 1
-# define TOKENS_LIST "\\%;"
+# define TOKENS_LIST "\\%!"
 
 # define NO_CONFIG_FILE \
 "no config file found, do you want to generate one?"
 
 # define CONFIG_FILE_QUESTION \
-"[c] continue | [m] generate config file | else stop"
+"[c] continue | [g] generate config file | else stop"
 
 # define WITCH_FILE \
 "multiple config were files found, select which one should be used :"
@@ -126,12 +126,19 @@ typedef enum {
 # define NUMBER_OF_OS 3
 
 static const char* const keyWords[] = {
-  "LINUX",
-  "WINDOWS",
-  "MACOS",
+  "P_LINUX",
+  "P_WINDOWS",
+  "P_MACOS",
+  //
+  "T_LINUX",
+  "T_WINDOWS",
+  "T_MACOS",
+  //
   "ENV_",
   "SHELL",
   "ROOT",
+  "LOG",
+  "DEV",
   0x0,
 };
 
@@ -146,12 +153,19 @@ static const char* const keyWords[] = {
 //* https://www.geeksforgeeks.org/c/how-do-i-create-a-library-in-c/
 
 enum {
-  k_linux   = 0,
-  k_windows = 1,
-  k_macos   = 2,
-  k_env     = 3,
-  k_shell   = 4,
-  k_root    = 5,
+  k_p_linux   = 0,
+  k_p_windows = 1,
+  k_p_macos   = 2,
+  // - - - - -=- -
+  k_t_linux   = 3,
+  k_t_windows = 4,
+  k_t_macos   = 5,
+  // - - - - -=- -
+  k_env       = 6,
+  k_shell     = 7,
+  k_root      = 8,
+  k_log       = 9,
+  k_dev       = 10,
 };
 
 
@@ -173,6 +187,8 @@ typedef struct s_reserveVar {
 
 typedef void(*shellCall)(void*, ssize_t*);
 
+# define MAX_MSG_LEN MAXPATHLEN
+
 typedef struct {
   bool        isOpen;
   bool        cpp;
@@ -187,11 +203,13 @@ typedef struct {
   t_reserveVar  var;
   t_configValue configFile;
   shellCall     shellFt;
+  char          msg[MAX_MSG_LEN];
+  ssize_t       msgLen;
   char          shellEnd[10];
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);
-int          makerStart(outFileData* data, const char* file);
+int          makerStart(outFileData* data);
 int          runOutFile(outFileData* data);
 
 int         checkIfFileValid(outFileData* data);
@@ -216,7 +234,7 @@ void        printOutVar(t_outVar* head);
 ssize_t     addToc(char* to, char c, size_t curentLen);
 
 
-char*       readVariableName(outFileData* data, e_reservedVarNames name);
+const char* readVariableName(outFileData* data, e_reservedVarNames name);
 
 bool        newFile(char* name, outFileData* data);
 int         openConfigFile(outFileData* data, bool preopen);

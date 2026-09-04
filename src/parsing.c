@@ -1,4 +1,4 @@
-#include "parsing.h"
+# include "parsing.h"
 # include "dataType.h"
 # include "utils.h"
 # include "flags.h"
@@ -33,7 +33,7 @@ char   value__[VALUE_MAX_SIZE];
 
 
 char* grab_value(t_settings* settings, const char* value, int type) {
-  bzero(&value__, VALUE_MAX_SIZE);
+  r_bzero(&value__, VALUE_MAX_SIZE);
   const char*  p = value;
   if (!p)
     return value__;
