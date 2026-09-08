@@ -139,6 +139,7 @@ static const char* const keyWords[] = {
   "ROOT",
   "LOG",
   "DEV",
+  "T_WEB",
   0x0,
 };
 
@@ -166,6 +167,7 @@ enum {
   k_root      = 8,
   k_log       = 9,
   k_dev       = 10,
+  k_t_web     = 11,
 };
 
 

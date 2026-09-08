@@ -1,8 +1,11 @@
 NAME:scb
 
 LINUX_COMP:
+  %_T_WEB\ test
+  %_LOG
   %_T_WINDOWS\ \ x86_64-w64-mingw32-gcc
   %_T_LINUX\ \ cc
+  %_LOG
 
 WINDOWS_COMP:
   %_T_LINUX\ \ cc
