@@ -165,7 +165,7 @@ static ssize_t drawDep(outFileData* data) {
 static ssize_t drawProg(outFileData* data, const char* const compiler, const bool prog) {
   ssize_t t = 0;
   t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
-  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) $(CFLAGS) $(OBJS) ", compiler, compiler);
+  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) $(OBJS) $(CFLAGS) ", compiler, compiler);
   if (prog) {
     const char* const progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);

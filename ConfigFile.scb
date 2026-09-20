@@ -1,0 +1,45 @@
+NAME:src
+
+# comp rules
+LINUX_COMP:
+  %_T_LINUX\ \ cc
+  %_T_WINDOWS\ add c c/c++ comp
+  %_T_MACOS\ \ add c c/c++ comp
+
+WINDOWS_COMP:
+  %_T_LINUX\ \ add c c/c++ comp
+  %_T_WINDOWS\ cl
+  %_T_MACOS\ \ add c c/c++ comp
+
+MACOS_COMP:
+  %_T_LINUX\ \ add c c/c++ comp
+  %_T_WINDOWS\ add c c/c++ comp
+  %_T_MACOS\ \ cc
+
+CC:
+  %_P_LINUX\ \ %LINUX_COMP
+  %_P_MACOS\ \ %MACOS_COMP
+  %_P_WINDOWS\ %WINDOWS_COMP
+  %_LOG
+
+CXX:
+  %_P_LINUX\ \ %LINUX_COMP
+  %_P_MACOS\ \ %MACOS_COMP
+  %_P_WINDOWS\ %WINDOWS_COMP
+
+CFLAGS:   add c   flag
+CXXFLAGS: add c++ flag
+
+dev:
+  devflags
+
+
+
+
+# buid program
+#PROG: add flags or lib
+# buid lib (.a file)
+#LIB:  add flags or lib
+# buid lib (.so file)
+#DLIB: add flags or lib
+#
