@@ -192,15 +192,15 @@ typedef void(*shellCall)(void*, ssize_t*);
 # define MAX_MSG_LEN MAXPATHLEN
 
 typedef struct {
-  bool        isOpen;
-  bool        cpp;
-  int         fd;
-  t_SCB*      scb;
-  short       target; // linux, windows, mac
-  int         outputType;
-  char*       workingDirectory;
-  char*       config[PATH_MAX];
-  t_outVar*   outVar;
+  bool          isOpen;
+  bool          cpp;
+  int           fd;
+  t_SCB*        scb;
+  short         target; // linux, windows, mac
+  int           outputType;
+  char*         workingDirectory;
+  char*         config[PATH_MAX];
+  t_outVar*     outVar;
   //
   t_reserveVar  var;
   t_configValue configFile;
@@ -214,38 +214,38 @@ outFileData  makerSetup(t_SCB* in, int mode);
 int          makerStart(outFileData* data);
 int          runOutFile(outFileData* data);
 
-int         checkIfFileValid(outFileData* data);
-int         checkVar(outFileData* data);
+int          checkIfFileValid(outFileData* data);
+int          checkVar(outFileData* data);
 
 
-int         superStrcmp(const char* s1, const char* s2, size_t n);
+int          superStrcmp(const char* s1, const char* s2, size_t n);
 
-short       printNl(const int fd);
-size_t      output(int fd, const char* s, ...);
-size_t      scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
-bool        testIsIgnore(const char* name, const char* list);
+short        printNl(const int fd);
+size_t       output(int fd, const char* s, ...);
+size_t       scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType);
+bool         testIsIgnore(const char* name, const char* list);
 
-const char* findCommentFromType(int type);
-
-
-void        extractVar(const char* l, size_t start, size_t *end, char const sep);
-
-t_outVar*   makeOutVarLast(const char* name, t_outVar** list);
-void        freeOutVar(t_outVar** list);
-void        printOutVar(t_outVar* head);
-ssize_t     addToc(char* to, char c, size_t curentLen);
+const char*  findCommentFromType(int type);
 
 
-const char* readVariableName(outFileData* data, e_reservedVarNames name);
+void         extractVar(const char* l, size_t start, size_t *end, char const sep);
 
-bool        newFile(char* name, outFileData* data);
-int         openConfigFile(outFileData* data, bool preopen);
-void        closeFile(outFileData* data);
+t_outVar*    makeOutVarLast(const char* name, t_outVar** list);
+void         freeOutVar(t_outVar** list);
+void         printOutVar(t_outVar* head);
+ssize_t      addToc(char* to, char c, size_t curentLen);
+
+
+const char*  readVariableName(outFileData* data, e_reservedVarNames name);
+
+bool         newFile(char* name, outFileData* data);
+int          openConfigFile(outFileData* data, bool preopen);
+void         closeFile(outFileData* data);
 //
-int         isVarInConfig(int var, t_reserveVar varList);
-int         removeEndl(char* value);
+int          isVarInConfig(int var, t_reserveVar varList);
+int          removeEndl(char* value);
 
 
-int         printConfigFiles(t_node* head);
+int          printConfigFiles(t_node* head);
 
 #endif

@@ -164,11 +164,24 @@ static ssize_t drawDep(outFileData* data) {
 
 static ssize_t drawProg(outFileData* data, const char* const compiler, const bool prog) {
   ssize_t t = 0;
+  const char* flags = !data->cpp ? "$(CFLAGS)" : "$(CXXFLAGS)";
   t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
-  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) $(OBJS) $(CFLAGS) ", compiler, compiler);
+  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -o $(NAME)$(NAMEX) $(OBJS) %s ", compiler, compiler, flags);
   if (prog) {
     const char* const progVar = readVariableName(data, Vprog);
     t += output(data->fd, " %s ", progVar);
+  }
+  t += output(data->fd, "\n\n");
+  return t;
+}
+
+static ssize_t drawDlib(outFileData* data, const char* const compiler) {
+  ssize_t t = 0;
+  t += output(data->fd, "$(NAME): $(%s)\n\n", compiler);
+  t += output(data->fd, "$(%s): $(OBJS)\n\t$(%s) -shared -o $(NAME)$(NAMEX) $(OBJS) ", compiler, compiler);
+  const char* const dlib = readVariableName(data, Vdlib);
+  if (dlib[0]) {
+    t += output(data->fd, " %s ", dlib);
   }
   t += output(data->fd, "\n\n");
   return t;
@@ -196,6 +209,9 @@ static ssize_t drawMakeRule(outFileData* data) {
   if (lib) {
     //! add lib buid here for .so or .a
     t += drawlib(data, "ar rcs");
+  }
+  if (dlib) {
+    t += drawDlib(data, compiler);
   }
   //!add more var if needed
   if (dep) {
