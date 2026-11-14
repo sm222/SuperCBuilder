@@ -241,7 +241,7 @@ static ssize_t drawEnd(outFileData* data) {
   t += output(data->fd, "clean:\n\t@rm -fv $(OBJS)\n");
   if (isVarInConfig(Vclean, data->var))
     t += drawClean(data);
-  t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)\n\n", path);
+  t += output(data->fd, "fclean: clean\n\t@rm -fv %s/$(NAME)$(NAMEX)\n\n", path);
   t += output(data->fd, "regen:\n\t");
   for (int x = 0; x < data->scb->mainData->ac; x++) {
     char* space = x != data->scb->mainData->ac - 1 ? " " : "";

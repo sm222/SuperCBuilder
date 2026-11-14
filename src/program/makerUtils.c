@@ -388,14 +388,14 @@ static const char* const crossplatform[] = {
   0x0
 };
 
-typedef enum {
+typedef enum : int {
   cf_simple,
   cf_crossplatform,
   cf_invalid,
 } configFileFab;
 
 static bool makeDefaultConfigFile(outFileData* data, configFileFab fab) {
-  if ((int)fab < 0 || (int)fab >= cf_invalid) {
+  if (fab < 0 || fab >= cf_invalid) {
     fprintf(stderr, "invalid choice\n");
     return false;
   }
@@ -655,7 +655,9 @@ static inline bool valid(int prev, int now) {
 static int isLineValid(const char* s) {
   int lineType = s ? L_unknown : L_empty;
   if (s) {
-    if (*s == '#' || *s == '\n') { return L_comment; }
+    if (*s == '#' || *s == '\n') {
+      return *s == '#' ? L_comment : L_empty;
+    }
     else if (isdigit(*s) || *s == ':' ) { return L_invalid; }
     else if (isspace(*s))  { lineType = L_varValue; }
     else if (isalpha(*s))  { lineType = L_var; }

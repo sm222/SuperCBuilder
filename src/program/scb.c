@@ -163,11 +163,11 @@ int mapDir(const char* path, t_node** head, unsigned int maxDep) {
     #else
     struct _stat64i32 stats;
   #endif
-  char wd[PATH_MAX + 1];
+  char wd[PATH_MAX + 3];
   do {
     de = readdir(dr);
     if (de) {
-      snprintf(wd, PATH_MAX, "%s/%s", path, de->d_name);
+      snprintf(wd, PATH_MAX + 2, "%s/%s", path, de->d_name);
       if (statRap(wd, &stats) != 0) {
         perror(de->d_name);
         break ;
