@@ -205,6 +205,14 @@ size_t output(int fd, const char * s, ...) {
 
 # define CSBHEADERLINE " - - - - - - - - - - - - - - - "
 
+const char* targetName(int id) {
+  if (id < NUMBER_OF_OS)
+    return SYS_NAMES[id];
+  if (id == k_t_web)
+    return "WEB";
+  return "- - -";
+}
+
 size_t scbHeader(outFileData* data, const char* comment, const char* uName, const char* pName, const char* fType) {
   time_t rawtime;
   struct tm* timeinfo;
@@ -214,7 +222,7 @@ size_t scbHeader(outFileData* data, const char* comment, const char* uName, cons
   size_t out = 0;
   out += output(data->fd, "%s" CSBHEADERLINE "%s" CSBHEADERLINE "%s\n", comment, comment, comment);
   out += output(data->fd, "%s %s Make with scb on %s",comment, fType, asctime(timeinfo));
-  out += output(data->fd, "%s from -> %s to -> %s\n", comment, SYS_NAMES[SYSTYPE], SYS_NAMES[data->target]);
+  out += output(data->fd, "%s from -> %s to -> %s\n", comment, SYS_NAMES[SYSTYPE], targetName(data->target));
   out += output(data->fd, "%s built by %s\n", comment, maker);
   out += output(data->fd, "%s project name -> %s\n", comment, pName);
   out += output(data->fd, "%s config file  -> %s\n", comment, data->configFile.name);
@@ -231,6 +239,7 @@ static int getTarget(t_SCB* scb) {
     if (superStrcmp(SYS_NAMES[i], os, strlen(SYS_NAMES[i]) + 1) == 0)
       return i;
   }
+  if (superStrcmp(os, "web", 4) == 0) { return k_t_web; }
   return unknown;
 }
 
@@ -379,14 +388,14 @@ static const char* const crossplatform[] = {
   0x0
 };
 
-typedef enum {
+typedef enum : int {
   cf_simple,
   cf_crossplatform,
   cf_invalid,
 } configFileFab;
 
 static bool makeDefaultConfigFile(outFileData* data, configFileFab fab) {
-  if ((int)fab < 0 || (int)fab >= cf_invalid) {
+  if (fab < 0 || fab >= cf_invalid) {
     fprintf(stderr, "invalid choice\n");
     return false;
   }
@@ -646,7 +655,9 @@ static inline bool valid(int prev, int now) {
 static int isLineValid(const char* s) {
   int lineType = s ? L_unknown : L_empty;
   if (s) {
-    if (*s == '#' || *s == '\n') { return L_comment; }
+    if (*s == '#' || *s == '\n') {
+      return *s == '#' ? L_comment : L_empty;
+    }
     else if (isdigit(*s) || *s == ':' ) { return L_invalid; }
     else if (isspace(*s))  { lineType = L_varValue; }
     else if (isalpha(*s))  { lineType = L_var; }
@@ -753,8 +764,10 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   }
   else if (i == k_dev) {
     const bool isDevMode = read_byte(data->scb->mainData->flags, flags_dev);
-    return !isDevMode; // read rest of line if dev mode
-  } else {
+    return !isDevMode; //read rest of line if dev mode
+  }
+  else if (i == k_t_web ) { return !(data->target == k_t_web); }
+  else {
     fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
     return 1;
   }
@@ -844,10 +857,6 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       }
     }
     (*total) -= removeEndl(data->configFile.buffer);
-    if (data->shellEnd[0]) {
-      addTo(data->configFile.buffer, data->shellEnd, total);
-      data->shellEnd[0] = 0;
-    }
     line = data->configFile.rawData[i] ? data->configFile.rawData[i + 1] : NULL;
     i++;
     if (isLineValid(line) == L_varValue) {
@@ -855,6 +864,13 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       nlValid = true;
     }
   } while (nlValid);
+  if (data->shellEnd[0]) {
+    //? add at the end on line the shell
+    //! if it a other keyword or variable will end here
+    //! add to doc to not add keywrod inside of %_SHELL
+    addTo(data->configFile.buffer, data->shellEnd, total);
+    data->shellEnd[0] = 0;
+  }
   return nameLen;
 }
 
