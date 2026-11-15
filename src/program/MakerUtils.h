@@ -136,6 +136,7 @@ static const char* const keyWords[] = {
   //
   "ENV_",
   "SHELL",
+  "SHELL_END",
   "ROOT",
   "LOG",
   "DEV",
@@ -164,10 +165,11 @@ enum {
   // - - - - -=- -
   k_env       = 6,
   k_shell     = 7,
-  k_root      = 8,
-  k_log       = 9,
-  k_dev       = 10,
-  k_t_web     = 11,
+  k_shell_end = 8,
+  k_root      = 9,
+  k_log       = 10,
+  k_dev       = 11,
+  k_t_web     = 12,
 };
 
 
@@ -188,6 +190,7 @@ typedef struct s_reserveVar {
 } t_reserveVar;
 
 typedef void(*shellCall)(void*, ssize_t*);
+typedef void(*shellCallEnd)(void*, ssize_t*);
 
 # define MAX_MSG_LEN MAXPATHLEN
 
@@ -205,9 +208,9 @@ typedef struct {
   t_reserveVar  var;
   t_configValue configFile;
   shellCall     shellFt;
+  shellCall     shellEndFt;
   char          msg[MAX_MSG_LEN];
   ssize_t       msgLen;
-  char          shellEnd[10];
 } outFileData;
 
 outFileData  makerSetup(t_SCB* in, int mode);
@@ -233,6 +236,7 @@ void         extractVar(const char* l, size_t start, size_t *end, char const sep
 t_outVar*    makeOutVarLast(const char* name, t_outVar** list);
 void         freeOutVar(t_outVar** list);
 void         printOutVar(t_outVar* head);
+ssize_t      addTo(char* to, const char* line, ssize_t* curentLen);
 ssize_t      addToc(char* to, char c, size_t curentLen);
 
 

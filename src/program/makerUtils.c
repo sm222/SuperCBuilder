@@ -752,8 +752,11 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     if (!data->shellFt) { return 1; }
     data->shellFt(data, total);
     return 0;
-  }
-  else if (i == k_root) {
+  } else if (i == k_shell_end) {
+    if (!data->shellEndFt) { return 1; }
+    data->shellEndFt(data, total);
+    return 0;
+  } else if (i == k_root) {
     const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
     addTo(data->configFile.buffer, path, total);
     addToc(data->configFile.buffer, FILE_SEP, (*total));
@@ -841,8 +844,9 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     while (j < lineLen) {
       if (line[j] == '%') {
         if (line[j + 1] == '_') {
-          if (testKeyWord(data, line + j + (TOKENSIZE * 2), &j, total))
+          if (testKeyWord(data, line + j + (TOKENSIZE * 2), &j, total)) {
             break ;
+          }
         }
         j += getValue(data, total, i, line + j + TOKENSIZE) + TOKENSIZE;
       }
@@ -864,13 +868,6 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
       nlValid = true;
     }
   } while (nlValid);
-  if (data->shellEnd[0]) {
-    //? add at the end on line the shell
-    //! if it a other keyword or variable will end here
-    //! add to doc to not add keywrod inside of %_SHELL
-    addTo(data->configFile.buffer, data->shellEnd, total);
-    data->shellEnd[0] = 0;
-  }
   return nameLen;
 }
 

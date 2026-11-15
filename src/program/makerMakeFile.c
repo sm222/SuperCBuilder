@@ -257,7 +257,6 @@ static ssize_t drawEnd(outFileData* data) {
 static void shellCallFt(void* data, ssize_t* total) {
   outFileData* structCast = data;
   const char* const keyWord = "$(shell )";
-  memcpy(structCast->shellEnd, ")", 2);
   ssize_t i = 0;
   while (keyWord[i] != ')') {
     addToc(structCast->configFile.buffer, keyWord[i], *total);
@@ -266,10 +265,17 @@ static void shellCallFt(void* data, ssize_t* total) {
   }
 }
 
+static void shellCallEndFt(void* data, ssize_t* total) {
+  outFileData* structCast = data;
+  const char* const keyWord = ")";
+  addTo(structCast->configFile.buffer, keyWord, total);
+}
+
 ssize_t buildMakefile(outFileData* data) {
   ssize_t totalBytes = 0;
   // rework later
   data->shellFt = shellCallFt;
+  data->shellEndFt = shellCallEndFt;
   const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;

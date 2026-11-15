@@ -131,7 +131,6 @@ static ssize_t drawDep(outFileData* data) {
 static void shellCallFt(void* data, ssize_t* total) {
   outFileData* structCast = data;
   const char* const keyWord = "$()";
-  memcpy(structCast->shellEnd, ")", 2);
   size_t i = 0;
   while (keyWord[i] != ')') {
     addToc(structCast->configFile.buffer, keyWord[i], *total);
