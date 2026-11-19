@@ -5,6 +5,8 @@
 static char* capName(const char* name) {
   static char newName[MAXPATHLEN + 20];
   size_t len = strlen(name);
+  if (len > (MAXPATHLEN + 10))
+    len = (MAXPATHLEN);
   r_bzero(newName, MAXPATHLEN + 20);
   while (len--) {
     newName[len] = (char)toupper(name[len]);
@@ -256,7 +258,7 @@ static ssize_t drawEnd(outFileData* data) {
 //! need to test see if it works
 static void shellCallFt(void* data, ssize_t* total) {
   outFileData* structCast = data;
-  const char* const keyWord = "$(shell )";
+  const char* const keyWord = "$(shell)";
   ssize_t i = 0;
   while (keyWord[i] != ')') {
     addToc(structCast->configFile.buffer, keyWord[i], *total);
@@ -271,16 +273,53 @@ static void shellCallEndFt(void* data, ssize_t* total) {
   addTo(structCast->configFile.buffer, keyWord, total);
 }
 
+static size_t summonVarFt(void* data, ssize_t* total, const char* const var) {
+  outFileData* structCast = data;
+  //clean that (not working)
+  const char* toUp = capName(var);
+  addTo(structCast->configFile.buffer, "$(", total);
+  size_t i = 1;
+  // start to 1 to skip '+'
+  for (; toUp[i]; i++) {
+    if (isTokens(toUp[i]) || isspace(toUp[i]))
+      break ;
+    (*total) += addToc(structCast->configFile.buffer, toUp[i], *total);
+  }
+  (*total) += addToc(structCast->configFile.buffer,')', *total);
+  return i;
+}
+
+
+static ssize_t preDefineVar(outFileData* data) {
+  ssize_t total = 0;
+  for (size_t i = 0; data->configFile.rawData[i]; i++) {
+    const char* line = data->configFile.rawData[i];
+    if (line[0] == '+') {
+      total += printNl(data->fd);
+      const size_t varlen = findVarLen(line + 1);
+      total += output(data->fd, "%.*s\t\t\t=", (int)varlen, line + 1);
+      ssize_t b = 0;
+      getValue(data, &b, i, NULL);
+      total += output(data->fd, "%s\n", data->configFile.buffer);
+    }
+  }
+  total += printNl(data->fd);
+  return total;
+}
+
+
 ssize_t buildMakefile(outFileData* data) {
   ssize_t totalBytes = 0;
   // rework later
   data->shellFt = shellCallFt;
   data->shellEndFt = shellCallEndFt;
+  data->summonVarFt = summonVarFt;
   const char* hardcodePname = strrchr(data->scb->originPath, FILE_SEP) + 1;
   if (!newFile("Makefile", data))
     return -1;
   const char* const user = getenv("USER");
   totalBytes += scbHeader(data, findCommentFromType(data->outputType), user, hardcodePname, "Makefile");
+  totalBytes += preDefineVar(data);
   totalBytes += drawCompiler(data);
   totalBytes += drawName(hardcodePname, data);
   //

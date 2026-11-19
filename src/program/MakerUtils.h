@@ -10,6 +10,9 @@
 # include <stdarg.h>
 
 # define ENDL(c)    ((c == '\n') || (c == '\0'))
+# define NEWLINE(c) ((c == '\n'))
+
+# define FLIPERROR(error) ((error ? error : error * -1))
 
 # define TOKENSIZE 1
 # define TOKENS_LIST "\\%!"
@@ -38,7 +41,8 @@ enum {
   L_comment  =  1,
   L_var      =  2,
   L_varValue =  3,
-  L_invalid  =  4,
+  L_varDef   =  4,
+  L_invalid  =  5,
 };
 
 
@@ -141,6 +145,7 @@ static const char* const keyWords[] = {
   "LOG",
   "DEV",
   "T_WEB",
+  "+", //%_+ and var name
   0x0,
 };
 
@@ -170,6 +175,7 @@ enum {
   k_log       = 10,
   k_dev       = 11,
   k_t_web     = 12,
+  k_var       = 13,
 };
 
 
@@ -189,8 +195,9 @@ typedef struct s_reserveVar {
   bool  varValue[sizeof(reservedVarNames) / sizeof(char*)];
 } t_reserveVar;
 
-typedef void(*shellCall)(void*, ssize_t*);
-typedef void(*shellCallEnd)(void*, ssize_t*);
+typedef void  (*shellCall)   (void*, ssize_t*);
+typedef void  (*shellCallEnd)(void*, ssize_t*);
+typedef size_t(*summonVar)   (void*, ssize_t*, const char* const var);
 
 # define MAX_MSG_LEN MAXPATHLEN
 
@@ -209,6 +216,9 @@ typedef struct {
   t_configValue configFile;
   shellCall     shellFt;
   shellCall     shellEndFt;
+  //
+  summonVar     summonVarFt;
+  //
   char          msg[MAX_MSG_LEN];
   ssize_t       msgLen;
 } outFileData;
@@ -241,6 +251,8 @@ ssize_t      addToc(char* to, char c, size_t curentLen);
 
 
 const char*  readVariableName(outFileData* data, e_reservedVarNames name);
+//
+size_t       getValue(outFileData* data, ssize_t* total, const size_t start, const char* name);
 
 bool         newFile(char* name, outFileData* data);
 int          openConfigFile(outFileData* data, bool preopen);
@@ -249,6 +261,9 @@ void         closeFile(outFileData* data);
 int          isVarInConfig(int var, t_reserveVar varList);
 int          removeEndl(char* value);
 
+ssize_t      findVarLen(const char* s);
+
+int          isTokens(int c);
 
 int          printConfigFiles(t_node* head);
 

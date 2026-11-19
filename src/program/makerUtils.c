@@ -607,7 +607,7 @@ size_t skipWhiteSpace(const char* s, size_t start) {
   return i;
 }
 
-static inline int isTokens(int c) {
+inline int isTokens(int c) {
   unsigned short i = 0;
   while (TOKENS_LIST[i]) {
     if (TOKENS_LIST[i] == c)
@@ -617,7 +617,7 @@ static inline int isTokens(int c) {
   return 0;
 }
 
-static inline ssize_t findVarLen(const char* s) {
+ssize_t findVarLen(const char* s) {
   ssize_t i = 0;
   while ((s[i] && \
     !isspace(s[i]) && \
@@ -633,10 +633,11 @@ static void getParsingError(int type) {
     type *= -1;
   const char* line = "";
   if (type == L_invalid || type == L_unknown) {
-    line = "line is invalid\n";
+    line = "line is invalid";
   }
-  else if (type == L_var) { line = "invalid variable\n";}
-  else if (type == L_varValue) { line = "floting value\n"; }
+  else if (type == L_var) { line = "invalid declaration";}
+  else if (type == L_varValue) { line = "floting value"; }
+  else if (type == L_varDef)   { line = "invalide global declaration"; }
   fprintf(stderr,"%s\n", line);
 }
 
@@ -652,6 +653,21 @@ static inline bool valid(int prev, int now) {
   return now >= 0 ? true : false;
 }
 
+
+static int testCVar(const char* s) {
+  int i = 0;
+  const size_t varlen = findVarLen(s + 1);
+  for (; reservedVarNames[i]; i++) {
+    const size_t scbVar = findVarLen(reservedVarNames[i]);
+    // can't match if too long
+    if (varlen > scbVar) { continue ; }
+    if (strncmp(s + 1, reservedVarNames[i], scbVar) == 0) {
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
 static int isLineValid(const char* s) {
   int lineType = s ? L_unknown : L_empty;
   if (s) {
@@ -661,14 +677,23 @@ static int isLineValid(const char* s) {
     else if (isdigit(*s) || *s == ':' ) { return L_invalid; }
     else if (isspace(*s))  { lineType = L_varValue; }
     else if (isalpha(*s))  { lineType = L_var; }
+    else if (*s == '+' && isalpha(*(s + 1))) {
+      const int find = testCVar(s);
+      if (find) {
+        fprintf(stderr, "scb: try to redefine %s\n", reservedVarNames[find - 1]);
+        return L_invalid;
+      }
+      s++; // skip '+'
+      lineType = L_varDef;
+    }
     else if (!isalpha(*s)) { return  L_invalid; }
     size_t i = 0;
     while (s[i]) {
       if ((!isspace(s[i]) && lineType == L_varValue) || \
-      (s[i] == ':' && lineType == L_var)) {
-        return lineType;
-      }
-      if (isspace(s[i]) && lineType == L_var)
+      (s[i] == ':' && lineType == L_var)) { return lineType; }
+      //
+      if (s[i] == ':' && lineType == L_varDef) { return lineType; }
+      if (isspace(s[i]) && (lineType == L_var || lineType == L_varDef))
         break ;
       i++;
     }
@@ -690,10 +715,11 @@ int checkIfFileValid(outFileData* data) {
     const char* l = data->configFile.rawData[i];
     const int line = isLineValid(l);
     if (!valid(prev, line)) {
+      const char endl = NEWLINE(l[strlen(l) - 1]) ? ':' : '\n';
       fprintf(stderr, "scb: invalid config file\n" \
-        "%s:%zu - > %s\n", data->configFile.name, i + 1, l);
+        "%s:%zu - > %s%c", data->configFile.name, i + 1, l, endl);
       getParsingError(line);
-      return 1;
+      return FLIPERROR(line);
     }
     i++;
     prev = line;
@@ -703,7 +729,12 @@ int checkIfFileValid(outFileData* data) {
 
 static size_t getEnvNameLen(const char* s) {
   size_t i = 0;
-  while (!isspace(s[i])) { i++; }
+  while (s[i]) {
+    if (isspace(s[i]) || isTokens(s[i])) {
+      break ;
+    }
+    i++;
+  }
   return i;
 }
 
@@ -723,26 +754,48 @@ static void readEnv(outFileData* data, const char* s, ssize_t* total) {
   }
 }
 
-bool isValidKeyword(const char* s, size_t i) {
-  const size_t keywordLen = strlen(keyWords[i]);
-  if (strncmp(s, keyWords[i], keywordLen) == 0) {
-    if (i == k_env) { return true; }
-    else {
-      return isspace(s[keywordLen]) || isTokens(s[keywordLen]);
+
+static size_t findKeywordLen(const char* const s) {
+  size_t i = 0;
+  while (s[i]) {
+    if (isTokens(s[i])) { break ; }
+    if (isspace(s[i]))  { break ; }
+    i++;
+  }
+  return i;
+}
+
+
+static short isValidKeyword(const char* s) {
+  const size_t keyword = findKeywordLen(s);
+  for (short i = 0; keyWords[i]; i++) {
+    const size_t keywordTest = strlen(keyWords[i]);
+    if (i != k_env && i != k_var) {
+      if (keyword > keywordTest) { continue; }
+    }
+    if (strncmp(s, keyWords[i], keywordTest) == 0) {
+      if (i == k_env || i == k_var) { return i; }
+      else {
+        return (
+          (isspace(s[keywordTest]) || isTokens(s[keywordTest]) || !s[keyword]) ? i : -1);
+      }
     }
   }
-  return false;
+  return -1;
 }
 
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
-  const size_t len = findVarLen(s) - 1;
+  const size_t len = findVarLen(s);
   *dis += len;
-  short i = 0;
-  for ( ; keyWords[i]; i++) { if (isValidKeyword(s, i)) { break ; } }
+  const short i = isValidKeyword(s);
+  if (i == -1) {
+    fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
+    return 1;
+  }
   // test system target
-  if (i < NUMBER_OF_OS) { return (SYSTYPE == i ? 0 : 1); }
+  if (i < NUMBER_OF_OS) { return !(SYSTYPE == i); }
   else if (i < NUMBER_OF_OS * 2) {
-    return (data->target + NUMBER_OF_OS == i ? 0 : 1);
+    return (!(data->target + NUMBER_OF_OS == i));
   }
   else if (i == k_env) {
     readEnv(data, s, total);
@@ -755,6 +808,10 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
   } else if (i == k_shell_end) {
     if (!data->shellEndFt) { return 1; }
     data->shellEndFt(data, total);
+    return 0;
+  } else if (i == k_var) {
+    if (!data->summonVarFt) { return 1; }
+    *dis += data->summonVarFt(data, total, s + len);
     return 0;
   } else if (i == k_root) {
     const char* path = av_read(&data->scb->mainData->avNoFlags, 0);
@@ -770,10 +827,6 @@ static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* t
     return !isDevMode; //read rest of line if dev mode
   }
   else if (i == k_t_web ) { return !(data->target == k_t_web); }
-  else {
-    fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
-    return 1;
-  }
   return 0;
 }
 
@@ -820,13 +873,19 @@ static ssize_t tokensInterpretor(char t, outFileData* data, ssize_t* total, size
 # define MAX_RECRSIVE_DEP 2000
 static int recursiveDep = 0;
 
-static size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
+size_t getValue(outFileData* data, ssize_t* total, const size_t start, const char* name) {
   if ((int)(*total) > MAX_VAR_NAME_LEN || recursiveDep == MAX_RECRSIVE_DEP)
     return 0;
   recursiveDep++;
   size_t i = 0;
   const char* line = NULL;
-  const size_t nameLen = findVarLen(name);
+  size_t nameLen = name ? findVarLen(name) : 0;
+  if (name  == NULL) {
+    i = start;
+    line = data->configFile.rawData[i];
+    nameLen = findVarLen(line + 1) + 1;
+    goto START_LOOKING;
+  }
   if (IsKnowVar(data, total, nameLen, name))
     return nameLen;
   while (data->configFile.rawData[i]) {
@@ -836,6 +895,7 @@ static size_t getValue(outFileData* data, ssize_t* total, const size_t start, co
     i++;
     if (!data->configFile.rawData[i]) { return nameLen; }
   }
+  START_LOOKING: ;
   size_t j = nameLen + 1;
   bool nlValid = false;
   do {
