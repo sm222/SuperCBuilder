@@ -645,7 +645,7 @@ static inline bool valid(int prev, int now) {
   if (now == L_invalid || now == L_unknown)
     return false;
   if (now == L_varValue) {
-    if (prev == L_var || prev == L_varValue) {
+    if (prev == L_var || prev == L_varValue || prev == L_varDef) {
       return true;
     }
     return false;
@@ -784,18 +784,24 @@ static short isValidKeyword(const char* s) {
   return -1;
 }
 
+static bool testPlatform(const int platform) {
+  return !(platform == SYSTYPE);
+}
+
+
+
 static int testKeyWord(outFileData* data, const char* s, size_t* dis, ssize_t* total) {
   const size_t len = findVarLen(s);
-  *dis += len;
+  *dis += len + TOKENSIZE;
   const short i = isValidKeyword(s);
   if (i == -1) {
     fprintf(stderr, "scb: %.*s invalid keyword\n", (int)len, s);
     return 1;
   }
   // test system target
-  if (i < NUMBER_OF_OS) { return !(SYSTYPE == i); }
+  if (i < NUMBER_OF_OS) { return testPlatform(i); }
   else if (i < NUMBER_OF_OS * 2) {
-    return (!(data->target + NUMBER_OF_OS == i));
+    return (!((data->target + NUMBER_OF_OS) == i));
   }
   else if (i == k_env) {
     readEnv(data, s, total);
