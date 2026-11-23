@@ -910,13 +910,11 @@ size_t getValue(outFileData* data, ssize_t* total, const size_t start, const cha
     while (j < lineLen) {
       if (line[j] == '%') {
         if (line[j + 1] == '_') {
-          if (testKeyWord(data, line + j + (TOKENSIZE * 2), &j, total)) {
-            break ;
-          }
+          if (testKeyWord(data, line + j + (TOKENSIZE * 2), &j, total)) { break ; }
         }
         j += getValue(data, total, i, line + j + TOKENSIZE) + TOKENSIZE;
       }
-      if (line[j] == '\\') {
+      else if (line[j] == '\\') {
         tokensInterpretor(line[j + 1], data, total, i);
         j += 2;
       }

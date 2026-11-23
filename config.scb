@@ -28,7 +28,7 @@ debug:-g
 
 CFLAGS:
   -Wall -Werror -Wextra 
-  %debug -D USER=%_+BUILD_BY %_LOG 
+  %debug -D USER=%_+BUILD_BY\ %_LOG
 
 default:
   -D=HELLO
@@ -65,5 +65,5 @@ CLEAN:
   echo done;
 
 
-+BUILD_BY: %_ENV_USER\ %_LOG
+#+BUILD_BY: %_ENV_USER\ %_LOG
 
